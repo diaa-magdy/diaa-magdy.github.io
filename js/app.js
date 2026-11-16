@@ -221,15 +221,17 @@ async function vAdmin(){
   let S=[];try{S=await API.students();}catch(e){toast('⚠️ '+e.message);}
   S.sort((a,b)=>(b.created||0)-(a.created||0));
   const cnt=k=>S.filter(s=>s.status===k).length; const L2=S.filter(s=>s.status===admTab);
-  $('.adm').innerHTML=`<div class="hero" style="min-height:0;padding:22px"><div class="tx" style="max-width:70%"><span class="lv">Teacher · Diaa Magdy</span><h1 style="font-size:30px">Students</h1><p class="ar">اقبل طلابك بس — اللي ترفضه مش هيقدر يدخل.</p>
+  $('.adm').innerHTML=`<div class="hero" style="min-height:0;padding:22px"><div class="tx" style="max-width:70%"><span class="lv">Teacher · Diaa Magdy</span><h1 style="font-size:30px">Students</h1><p class="ar">اقبل طلابك بس — اللي ترفضه أو توقفه (Block) مش هيقدر يدخل، و🗑 بتحذفه خالص.</p>
     <div class="stats3"><div class="stat"><b>${cnt('pending')}</b><small>Waiting</small></div><div class="stat"><b>${cnt('approved')}</b><small>Approved</small></div><div class="stat"><b>${cnt('rejected')}</b><small>Rejected</small></div></div></div><img class="ch" src="img/chatty.png" alt="" style="width:150px"></div>
    <div class="tabsx">${[['pending','⏳ في الانتظار'],['approved','✅ المقبولين'],['rejected','⛔ المرفوضين']].map(t=>`<button class="${admTab===t[0]?'on':''}" onclick="admTab='${t[0]}';vAdmin()">${t[1]} (${cnt(t[0])})</button>`).join('')}</div>
    <div class="card">${L2.length?L2.map(s=>`<div class="stu"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:0"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.created?' · '+new Date(s.created).toLocaleDateString('en-GB'):''}</small>
       ${s.status==='approved'?`<div class="mini-prog">${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${s.final?`<span>🎓 ${s.final.best}%</span>`:''}</div>`:''}</div>
       ${s.status!=='approved'?`<button class="btn b-g" style="padding:8px 14px" data-st="approved" data-uid="${esc(s.uid)}">✔ Accept</button>`:''}
-      ${s.status!=='rejected'&&(s.email||'').toLowerCase()!==ADMIN?`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">✖ Reject</button>`:''}</div>`).join('')
+      ${s.status!=='rejected'&&(s.email||'').toLowerCase()!==ADMIN?`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">${s.status==='approved'?'⛔ Block':'✖ Reject'}</button>`:''}
+      ${(s.email||'').toLowerCase()!==ADMIN?`<button class="btn b-w" style="padding:8px 12px" title="Delete" data-del="${esc(s.uid)}" data-name="${esc(s.name||'')}">🗑</button>`:''}</div>`).join('')
      :`<div class="pad ar" style="color:var(--mut);text-align:center">لا يوجد طلاب هنا.</div>`}</div>
    <div class="row" style="justify-content:center;margin:16px 0"><a class="btn b-soft" href="#champions">🏆 لوحة الأبطال</a><a class="btn b-soft" href="#home">📚 الكورس</a></div>`;
+  $$('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('حذف الطالب "'+b.dataset.name+'" نهائيًا؟ لو حاول يدخل تاني هيرجع في قائمة الانتظار.'))return;b.disabled=true;try{await API.remove(b.dataset.del);toast('🗑 تم حذف الطالب');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
   $$('[data-st]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API.setStatus(b.dataset.uid,b.dataset.st);toast(b.dataset.st==='approved'?'✅ تم قبول الطالب':'⛔ تم الرفض');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
 }
 
@@ -415,8 +417,9 @@ function readAll(n){const R=UNITS[n].reading;stopAll();const tok=playTok;let i=0
 
 /* ================= GAMES ================= */
 const gkey=g=>g+'-u'+CUR;
-async function addScoreLB(game,score){done(CUR,'game');try{await API.addScore(gkey(game),score);}catch(e){console.warn(e);}renderBoard(game);renderBests();$$('#lbtabs button').forEach(b=>b.classList.toggle('on',b.dataset.lb===game));}
-async function topOf(key){let L2=[];try{L2=await API.scores(key);}catch(e){}return L2.sort((a,b)=>b.score-a.score);}
+async function addScoreLB(game,score){done(CUR,'game');try{await API.addScore(gkey(game),score);}catch(e){console.warn(e);}delete SC_CACHE[gkey(game)];delete SC_CACHE['*'];renderBoard(game);renderBests();$$('#lbtabs button').forEach(b=>b.classList.toggle('on',b.dataset.lb===game));}
+const SC_CACHE={};
+async function topOf(key,fresh){const c=SC_CACHE[key||'*'];if(!fresh&&c&&Date.now()-c.t<180000)return c.v;let L2=[];try{L2=await API.scores(key);}catch(e){}L2.sort((a,b)=>b.score-a.score);SC_CACHE[key||'*']={t:Date.now(),v:L2};return L2;}
 async function renderBoard(game){const el=$('#lbody');if(!el)return;const L2=(await topOf(gkey(game))).slice(0,10);
   el.innerHTML=L2.length?L2.map((x,i)=>`<div class="lb ${x.uid===USER.uid?'me':''}"><span class="r">${i<3?['🥇','🥈','🥉'][i]:i+1}</span><b>${esc(x.name)}</b><span class="s">${x.score}</span></div>`).join(''):`<div class="pad ar" style="text-align:center;color:var(--mut)">لسه محدش لعب — كن أول بطل! 🏆</div>`;}
 async function renderBests(){for(const g of ['memory','spell','speed']){const el=$('#best-'+g);if(!el)continue;const t=(await topOf(gkey(g)))[0];el.innerHTML=t?`👑 ${esc(t.name)} · ${t.score}`:'👑 No champion yet';}}
