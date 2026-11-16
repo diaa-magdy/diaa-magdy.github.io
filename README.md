@@ -2,5 +2,5 @@
 
 Interactive English course app — Mr. Diaa Magdy.
 
-- App: https://diaamagdy4112000-web.github.io/
-- Download (Android): https://diaamagdy4112000-web.github.io/download.html
+- App: https://diaa-magdy.github.io/
+- Download (Android): https://diaa-magdy.github.io/download.html
