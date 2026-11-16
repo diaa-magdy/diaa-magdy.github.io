@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.diaa_magdy.twa",
+        "sha256_cert_fingerprints": ["66:E2:A3:C8:D3:9D:A5:02:6E:81:B4:06:86:99:80:D9:D1:C1:E4:B3:C9:54:6C:D6:88:CF:BD:82:F7:85:84:6A"]
+      }
+    }]
