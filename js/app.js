@@ -6,8 +6,8 @@ const CFG=window.LP_CONFIG||{};
 const ADMIN=(CFG.adminEmail||'').toLowerCase();
 const UNIT_LIST=Object.keys(UNITS).map(Number).sort((a,b)=>a-b);
 const LEVELS=[
- {id:'preA1',ch:'img/char-chatty.png',chn:'Chatty',fam:'chatty',code:'Pre A1',en:'Foundation',ar:'التأسيس',ic:'🌱',ready:true},
- {id:'a1p',ch:'img/char-chatty.png',chn:'Chatty',fam:'chatty',code:'A1+',en:'Elementary Plus',ar:'المبتدئ المتقدم',ic:'🚀'},
+ {id:'preA1',ch:'img/char-basics.png',chn:'Chatty',fam:'chatty',code:'Pre A1',en:'Foundation',ar:'التأسيس',ic:'🌱',ready:true},
+ {id:'a1p',ch:'img/char-basics.png',chn:'Chatty',fam:'chatty',code:'A1+',en:'Elementary Plus',ar:'المبتدئ المتقدم',ic:'🚀'},
  {id:'a2',ch:'img/char-speaky.png',chn:'Speaky',fam:'speaky',code:'A2',en:'Pre-Intermediate',ar:'ما قبل المتوسط',ic:'📗'},
  {id:'a2p',ch:'img/char-speaky.png',chn:'Speaky',fam:'speaky',code:'A2+',en:'Pre-Intermediate Plus',ar:'ما قبل المتوسط المتقدم',ic:'📘'},
  {id:'b1',ch:'img/char-talky.png',chn:'Talky',fam:'talky',code:'B1',en:'Intermediate',ar:'المتوسط',ic:'💬'},
