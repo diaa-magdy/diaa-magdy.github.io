@@ -480,6 +480,7 @@ function vUnit(n){
       <div class="trans-l" id="tr-${v.id}">${v.lines.map((L,i)=>lineHTML(v,L,i)).join('')}</div></div>`;
       H+=makeEx(v.id+'q','?',{type:'mcq',title:'Did you understand?',ar:'هل فهمت الفيديو؟',items:v.quiz},v.id+'q');
       if(v.fill) H+=makeEx(v.id+'f','✎',fillFrom(v),v.id+'f');});
+    (u.watch||[]).forEach(w=>{H+=`<div class="sub">📺 ${esc(w.title)} <small>${w.ar}</small></div><div class="ytbox" data-yt="${w.yt}"><img src="https://i.ytimg.com/vi/${w.yt}/hqdefault.jpg" alt="" loading="lazy"><button class="ytplay" aria-label="Play">▶</button><span class="ytsrc">YouTube · ${esc(w.by||'')}</span></div>`;});
     H+=`</section>`;}
   /* vocab */
   H+=`<section class="sec" id="s-vocab">${secH('📚','Vocabulary','الكلمات الجديدة — اضغط على الصورة تسمع الكلمة والجملة','voc')}<div class="vtabs" id="vtabs">${u.vocab.map((g,i)=>`<button class="${i?'':'on'}" data-vt="${i}">${g.t} · <span class="ar">${g.ar}</span></button>`).join('')}</div><div id="vgrid"></div></section>`;
@@ -539,6 +540,7 @@ function vUnit(n){
   $$('video[data-vact]').forEach(v=>{v.addEventListener('play',()=>stopAll());v.addEventListener('timeupdate',()=>{if(v.duration&&v.currentTime/v.duration>.85)done(n,v.dataset.vact);});});
   $$('video').forEach(v=>v.addEventListener('play',()=>{stopAll();$$('video').forEach(o=>{if(o!==v)o.pause();});}));
   if(u.challenge)wireRecorder(n);
+  $$('.ytbox').forEach(b=>b.onclick=()=>{if(b.querySelector('iframe'))return;stopAll();$$('video').forEach(v=>v.pause());b.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${b.dataset.yt}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;});
 }
 let REC=null;
 function wireRecorder(n){const b=$('#recBtn'),st=$('#recStop'),tm=$('#recT');if(!b)return;
