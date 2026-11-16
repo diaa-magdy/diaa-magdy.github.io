@@ -1,0 +1,87 @@
+UNITS[1] = {
+ n:1, title:'Introduce Yourself', ar:'عرّف بنفسك', icon:'👋', cover:'img/u1.jpg',
+ intro:'عرّف بنفسك: اسمك، عمرك، من أين أنت، وعائلتك ووظائفهم.',
+ videos:[
+  {id:'u1v1', title:'Basic Information', ar:'معلومات أساسية', src:'video/u1v1.mp4', poster:'img/u1v1.jpg',
+   sp:{a:{n:'Adam',g:'m'},b:{n:'Sara',g:'f'}},
+   lines:[
+   ['a',"Hi! My name is Adam. What's your name?","مرحبًا! اسمي آدم. ما اسمك؟"],
+   ['b',"Hi, Adam. I'm Sara. Nice to meet you.","مرحبًا يا آدم. أنا سارة. سعيدة بلقائك."],
+   ['a',"Nice to meet you, too. How are you?","وأنا سعيد بلقائك أيضًا. كيف حالك؟"],
+   ['b',"I'm fine, thank you. And you?","أنا بخير، شكرًا لك. وأنت؟"],
+   ['a',"I'm good. Where are you from?","أنا بخير. من أين أنتِ؟"],
+   ['b',"I'm from Egypt. Where are you from?","أنا من مصر. من أين أنت؟"],
+   ['a',"I'm from Egypt, too. Where do you live?","أنا من مصر أيضًا. أين تسكنين؟"],
+   ['b',"I live in Sohag.","أسكن في سوهاج."],
+   ['a',"How old are you?","كم عمرك؟"],
+   ['b',"I'm 22 years old. And you?","عمري ٢٢ سنة. وأنت؟"],
+   ['a',"I'm 23. What do you do?","عمري ٢٣. ماذا تعملين؟"],
+   ['b',"I'm a student.","أنا طالبة."],
+   ['a',"Great! It was nice to meet you.","رائع! سعدت بلقائك."],
+   ['b',"Nice to meet you, too. See you!","وأنا أيضًا سعدت بلقائك. أراك لاحقًا!"]],
+   quiz:[{q:'Where is Sara from?',o:['Egypt','Spain','London'],a:0},{q:'Where does Sara live?',o:['Cairo','Sohag','Italy'],a:1},{q:'How old is Sara?',o:['23','20','22'],a:2},{q:'How old is Adam?',o:['23','22','25'],a:0},{q:'What does Sara do?',o:['She is a doctor.','She is a student.','She is a teacher.'],a:1}],
+   fill:[[0,'name'],[1,'meet'],[3,'fine'],[5,'from'],[7,'live'],[9,'old'],[11,'student']]},
+  {id:'u1v2', title:'Family & Jobs', ar:'العائلة والوظائف', src:'video/u1v2.mp4', poster:'img/u1v2.jpg',
+   sp:{a:{n:'Omar',g:'m'},b:{n:'Maya',g:'f'}},
+   lines:[
+   ['a',"Do you have a big family?","هل عندك عائلة كبيرة؟"],
+   ['b',"Yes, I do. I have a big family.","نعم. عندي عائلة كبيرة."],
+   ['a',"How many brothers do you have?","كم أخًا عندك؟"],
+   ['b',"I have two brothers and one sister.","عندي أخوان وأخت واحدة."],
+   ['a',"What does your father do?","ماذا يعمل والدك؟"],
+   ['b',"He's a doctor. He works in a hospital.","هو طبيب. يعمل في مستشفى."],
+   ['a',"What about your mother?","وماذا عن والدتك؟"],
+   ['b',"She's a teacher. She works at a school.","هي معلمة. تعمل في مدرسة."],
+   ['a',"And your brothers?","وإخوتك؟"],
+   ['b',"My older brother is an engineer. My younger brother is a student.","أخي الأكبر مهندس. وأخي الأصغر طالب."],
+   ['a',"What about your sister?","وماذا عن أختك؟"],
+   ['b',"She's a nurse.","هي ممرضة."],
+   ['a',"Wow! Your family has many different jobs.","واو! عائلتك لديها وظائف كثيرة مختلفة."],
+   ['b',"Yes! Everyone is busy, but we love spending time together.","نعم! الجميع مشغول، لكننا نحب قضاء الوقت معًا."],
+   ['a',"That's nice!","هذا جميل!"],
+   ['b',"Thank you!","شكرًا لك!"]],
+   quiz:[{q:'How many brothers does Maya have?',o:['one','two','three'],a:1},{q:"What does Maya's father do?",o:['He is a doctor.','He is a farmer.','He is a chef.'],a:0},{q:"Where does Maya's mother work?",o:['in a hospital','on a farm','at a school'],a:2},{q:"Maya's older brother is ___.",o:['a student','an engineer','a nurse'],a:1},{q:"Maya's sister is ___.",o:['a nurse','a teacher','a doctor'],a:0}],
+   fill:[[0,'family'],[3,'sister'],[5,'doctor'],[7,'teacher'],[9,'engineer'],[11,'nurse'],[13,'together']]}
+ ],
+ vocab:[
+  {t:'Greetings & me', ar:'التحية والتعريف', items:[['👋','hello','Hello! My name is Ali.'],['🤝','meet','Nice to meet you.'],['👤','name','My name is Sara.'],['📅','old','I am ten years old.'],['🌍','from','I am from Egypt.'],['🏠','live','I live in Cairo.'],['💬','speak','I speak Arabic and English.'],['🎓','student','I am a student.']]},
+  {t:'Family', ar:'العائلة', items:[['👨‍👩‍👧‍👦','family','This is my family.'],['👨','father','He is my father.'],['👩','mother','She is my mother.'],['👦','brother','He is my brother.'],['👧','sister','She is my sister.'],['👴','grandfather','He is my grandfather.'],['👵','grandmother','She is my grandmother.'],['🧑‍🤝‍🧑','friends','They are my friends.']]},
+  {t:'Jobs', ar:'الوظائف', items:[['👨‍⚕️','doctor','He is a doctor. He works in a hospital.'],['👩‍🏫','teacher','She is a teacher. She works at a school.'],['👷','engineer','He is an engineer.'],['👩‍⚕️','nurse','She is a nurse.'],['👨‍🌾','farmer','He is a farmer. He works on a farm.'],['👨‍🍳','chef','He is a chef. He cooks food.'],['👮','police officer','She is a police officer.'],['🚗','driver','He is a driver.']]}
+ ],
+ talk:[
+  {title:"Let's Talk · Basic Information", ar:'تكلم عن نفسك', list:[["What's your name?","ما اسمك؟","My name is Ali."],["How are you?","كيف حالك؟","I'm fine, thank you."],["How old are you?","كم عمرك؟","I'm 15 years old."],["Where are you from?","من أين أنت؟","I'm from Egypt."],["Where do you live?","أين تسكن؟","I live in Cairo."],["What languages do you speak?","ما اللغات التي تتحدثها؟","I speak Arabic and English."],["What do you do?","ماذا تعمل؟","I'm a student."],["What are your hobbies?","ما هواياتك؟","I like football and music."]]},
+  {title:"Let's Talk · Family & Jobs", ar:'تكلم عن عائلتك', list:[["Do you have a big family or a small family?","هل عائلتك كبيرة أم صغيرة؟","I have a big family."],["How many brothers and sisters do you have?","كم أخًا وأختًا عندك؟","I have one brother and two sisters."],["What does your father do?","ماذا يعمل والدك؟","He's an engineer."],["What does your mother do?","ماذا تعمل والدتك؟","She's a teacher."],["Do you live with your grandparents?","هل تعيش مع جدك وجدتك؟","No, I don't. / Yes, I do."],["What is your dream job?","ما وظيفة أحلامك؟","My dream job is a doctor."]]}
+ ],
+ grammar:{title:'The verb "to be"', ar:'فعل يكون: am / is / are', blocks:[
+  {type:'big', items:[{v:'am',p:'I',c:1,eg:['I am a student.']},{v:'is',p:'he · she · it',c:2,eg:['She is a doctor.','It is a cat.']},{v:'are',p:'we · you · they',c:3,eg:['We are friends.','They are happy.']}]},
+  {type:'uses', title:'We use "to be" to say…', ar:'نستخدمه عشان نقول', items:[['🧒','who we are','I am a student.','مين إحنا'],['🏠','where we are','We are at home.','إحنا فين'],['😊','how we feel','She is happy.','بنحس بإيه']]},
+  {type:'table', title:'✅ Positive · ❌ Negative · ❓ Question', head:['✅','❌','❓'], neg:1, rows:[['I am happy.','I am not happy.','Am I happy?'],['He is a doctor.',"He isn't a doctor.",'Is he a doctor?'],['She is from Egypt.',"She isn't from Egypt.",'Is she from Egypt?'],['We are students.',"We aren't students.",'Are we students?'],['They are friends.',"They aren't friends.",'Are they friends?']]},
+  {type:'table', title:'💬 Short answers', head:['Question','Yes','No'], neg:2, rows:[['Are you a student?','Yes, I am.',"No, I'm not."],['Is he at home?','Yes, he is.',"No, he isn't."],['Is it a pen?','Yes, it is.',"No, it isn't."],['Are they here?','Yes, they are.',"No, they aren't."]]},
+  {type:'tip', en:'Use am with I. Use is with he, she, it. Use are with we, you, they.', ar:'am مع I — و is مع he/she/it — و are مع we/you/they.'}]},
+ exercises:[
+  {type:'mcq',title:'Complete with am / is / are',ar:'أكمل بـ am / is / are',speak:true,items:[['I ___ a student.',0],['He ___ my father.',1],['She ___ from Spain.',1],['It ___ a dog.',1],['We ___ a family.',2],['You ___ my friend.',2],['They ___ happy.',2]].map(([q,a])=>({q,o:['am','is','are'],a}))},
+  {type:'ord',title:'Make sentences',ar:'كوّن جملًا — اضغط على الكلمات بالترتيب',items:[{c:['I','a student','am'],a:[0,2,1]},{c:['She','happy','is'],a:[0,2,1]},{c:['He','my brother','is'],a:[0,2,1]},{c:['We','from Egypt','are'],a:[0,2,1]},{c:['They','friends','are'],a:[0,2,1]},{c:['My family','big','is'],a:[0,2,1]}]},
+  {type:'mcq',title:'Short answers',ar:'الإجابات القصيرة',speak:true,items:[{q:'Are you a student? — Yes, I ___.',o:['am','is','are'],a:0},{q:'Is she a doctor? — No, she ___.',o:["isn't","aren't","am not"],a:0},{q:'Are they friends? — Yes, they ___.',o:['is','are','am'],a:1},{q:'Is he at home? — No, he ___.',o:["aren't","isn't","not"],a:1},{q:'Is it a cat? — Yes, it ___.',o:['is','are','am'],a:0}]},
+  {type:'mcq',title:'a or an?',ar:'a أم an؟',speak:true,items:[{q:'He is ___ engineer.',o:['a','an'],a:1},{q:'She is ___ teacher.',o:['a','an'],a:0},{q:'I am ___ student.',o:['a','an'],a:0},{q:'It is ___ umbrella.',o:['a','an'],a:1},{q:'He is ___ doctor.',o:['a','an'],a:0}]}
+ ],
+ numbers:true,
+ reading:{title:'My Family and Jobs', ar:'عائلتي ووظائفهم', video:'video/u1r.mp4', poster:'img/u1r.jpg', g:'m', lines:[
+  ["Hello! My name is Ali.","مرحبًا! اسمي علي."],["I am a student. I am 10 years old.","أنا طالب. عمري ١٠ سنوات."],["I live with my family in Cairo, Egypt.","أعيش مع عائلتي في القاهرة، مصر."],["There are five people in my family.","عائلتي مكونة من خمسة أشخاص."],["My father is a doctor. He works in a hospital.","والدي طبيب. يعمل في مستشفى."],["My mother is a teacher. She works in a school.","والدتي معلمة. تعمل في مدرسة."],["My sister, Hana, is a student. She is 7 years old.","أختي هنا طالبة. عمرها ٧ سنوات."],["My grandfather is a farmer. He works on the farm.","جدي مزارع. يعمل في المزرعة."],["My grandmother is at home. She cooks and takes care of us.","جدتي في البيت. تطبخ وتعتني بنا."],["I love my family very much!","أحب عائلتي كثيرًا!"]],
+  keys:[['👦','Ali','10 · student'],['👨‍⚕️','Father','doctor'],['👩‍🏫','Mother','teacher'],['👧','Hana','7 · student'],['👨‍🌾','Grandfather','farmer'],['👵','Grandmother','at home']],
+  quiz:[{q:'How old is Ali?',o:['8','10','12'],a:1},{q:'Where does Ali live?',o:['Sohag','London','Cairo'],a:2},{q:'How many people are in his family?',o:['four','five','six'],a:1},{q:"What does Ali's father do?",o:['He is a farmer.','He is a teacher.','He is a doctor.'],a:2},{q:'How old is Hana?',o:['7','10','17'],a:0},{q:'Where does the grandfather work?',o:['on the farm','in a school','in a hospital'],a:0}]},
+ sounds:{title:'Short vowels a e i o u', ar:'الحروف المتحركة القصيرة', video:'video/u1s.mp4', poster:'img/u1s.jpg',
+  tip:['Keep your mouth relaxed and say the sound short and quick.','اجعل فمك مسترخيًا وانطق الصوت قصيرًا وسريعًا.'],
+  groups:[['a','/æ/','cat','#e5484d',[['🐱','cat'],['🎩','hat'],['👜','bag'],['🗺️','map']]],['e','/e/','bed','#13a39a',[['🛏️','bed'],['🖊️','pen'],['🦵','leg'],['🐔','hen']]],['i','/ɪ/','sit','#f27f0c',[['🪑','sit'],['🐟','fish'],['🤐','zip'],['🐷','pig']]],['o','/ɒ/','dog','#1d6bf3',[['🐶','dog'],['📦','box'],['🍲','pot'],['🧦','sock']]],['u','/ʌ/','cup','#7b4fd6',[['☕','cup'],['🚌','bus'],['☂️','umbrella'],['☀️','sun']]]],
+  quiz:{title:'Listen and choose the short vowel',ar:'استمع واختر صوت الحرف',opts:['a','e','i','o','u'],items:[['🐱','cat',0],['🛏️','bed',1],['🐟','fish',2],['📦','box',3],['☕','cup',4],['🐔','hen',1],['🐷','pig',2],['☀️','sun',4]]}},
+ games:{pairs:[['👨‍⚕️','doctor'],['👩‍🏫','teacher'],['👨‍🌾','farmer'],['👨‍🍳','chef'],['👩‍⚕️','nurse'],['👷','engineer']],
+  spell:[['👨','father'],['👩','mother'],['👦','brother'],['👧','sister'],['🏠','home'],['🌍','from'],['📛','name'],['🏫','school']],
+  speed:[['I is a student.',false],['She is a nurse.',true],['They are friends.',true],['He are my brother.',false],['We are from Egypt.',true],['I am ten years old.',true],['It are a cat.',false],['You is kind.',false],['My mother is a teacher.',true],['They is happy.',false],['He is an engineer.',true],['She are a doctor.',false],['I am from Cairo.',true],['We is a family.',false],['It is a dog.',true],['You are my friend.',true]]},
+ test:{pass:60, sections:[
+  {id:'voc',title:'Vocabulary',ar:'المفردات',icon:'📚',qs:[{pic:'👨‍⚕️',q:'He works in a hospital. He is a ___.',o:['teacher','doctor','farmer'],a:1},{pic:'👩‍🏫',q:'She works at a school. She is a ___.',o:['teacher','chef','nurse'],a:0},{pic:'👨‍🌾',q:'He works on a farm. He is a ___.',o:['driver','engineer','farmer'],a:2},{pic:'👩',q:"My father's wife is my ___.",o:['sister','mother','grandmother'],a:1},{pic:'👧',q:"My mother's daughter is my ___.",o:['sister','brother','father'],a:0},{q:'"أين تسكن؟" in English is…',say:'Choose the correct question.',o:['Where are you from?','Where do you live?','What do you do?'],a:1}]},
+  {id:'gra',title:'Grammar',ar:'القواعد',icon:'📘',qs:[{q:'I ___ from Egypt.',o:['am','is','are'],a:0},{q:'My sister ___ a nurse.',o:['am','is','are'],a:1},{q:'They ___ my classmates.',o:['am','is','are'],a:2},{q:'He is ___ engineer.',o:['a','an','—'],a:1},{q:'Is she a teacher? — No, she ___.',o:["isn't","aren't","am not"],a:0},{q:'Choose the correct sentence.',o:['I is 12 years old.','I am 12 years old.','I are 12 years old.'],a:1}]},
+  {id:'con',title:'Conversation',ar:'المحادثة',icon:'💬',qs:[{q:'"Nice to meet you." — Best answer:',o:['Nice to meet you, too.','I am from Egypt.','I am a student.'],a:0},{q:'"How are you?" — Best answer:',o:['I am 10.',"I'm fine, thank you.",'My name is Ali.'],a:1},{q:'"How old are you?" — Best answer:',o:["I'm from Cairo.",'I live in Sohag.',"I'm 14 years old."],a:2},{q:'"What do you do?" — Best answer:',o:["I'm a student.","I'm fine.","I'm from Egypt."],a:0},{q:'"What does your father do?" — Best answer:',o:['She is a nurse.','He is a doctor.','I am a driver.'],a:1}]},
+  {id:'rea',title:'Reading',ar:'القراءة',icon:'📖',passage:["Hi! I'm Laila. I'm 12 years old.","I'm from Egypt and I live in Alexandria.","I have one brother. His name is Karim. He is 16.","My father is an engineer. My mother is a nurse.","Karim and I are students. We love our family!"],
+   qs:[{q:'How old is Laila?',o:['16','12','10'],a:1},{q:'Where does Laila live?',o:['Cairo','Sohag','Alexandria'],a:2},{q:'Who is Karim?',o:['her father','her brother','her friend'],a:1},{q:"What does Laila's mother do?",o:['She is a nurse.','She is a teacher.','She is an engineer.'],a:0},{q:'Laila and Karim are ___.',o:['doctors','students','teachers'],a:1}]},
+  {id:'wri',title:'Writing',ar:'الكتابة',icon:'✍️',writing:true,prompt:'Write about yourself (40–80 words).',promptAr:'اكتب عن نفسك (من ٤٠ إلى ٨٠ كلمة): اسمك، عمرك، من أين أنت، أين تسكن، ماذا تعمل، وعائلتك ووظائفهم.',
+   checks:[['👤','My name is…','name'],['📅','I am … years old.','age'],['🌍','I am from…','from'],['🏠','I live in…','live'],['🎓','I am a student / a …','job'],['👨‍👩‍👧','My father / mother is a …','family']]}]}
+};

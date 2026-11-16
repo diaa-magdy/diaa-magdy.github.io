@@ -1,0 +1,68 @@
+UNITS[2] = {
+ n:2, title:'A Busy Day', ar:'يوم مزدحم — الروتين اليومي', icon:'⏰', cover:'img/u2.jpg',
+ intro:'اتكلم عن يومك: بتصحى إمتى، بتعمل إيه الصبح وبعد المدرسة وبالليل.',
+ videos:[
+  {id:'u2v1', title:'A Busy Day', ar:'يوم مزدحم', src:'video/u2v1.mp4', poster:'img/u2v1.jpg',
+   sp:{a:{n:'Omar',g:'m'},b:{n:'Sara',g:'f'}},
+   lines:[
+   ["a","Hi, Sara! What time do you get up every day?","أهلًا يا سارة! بتصحي الساعة كام كل يوم؟"],
+   ["b","I get up at 6 o'clock.","بصحى الساعة ٦."],
+   ["b","Then I take a shower and have breakfast.","وبعدين باخد دش وبفطر."],
+   ["a","What do you eat for breakfast?","بتفطري إيه؟"],
+   ["b","I eat eggs and bread, and I drink some milk.","باكل بيض وعيش، وبشرب شوية لبن."],
+   ["a","Do you go to school?","بتروحي المدرسة؟"],
+   ["b","Yes, I do. I walk to school because I live near it.","أيوه. بروح المدرسة مشي عشان ساكنة قريب منها."],
+   ["a","What do you do after school?","بتعملي إيه بعد المدرسة؟"],
+   ["b","I come home and study for two hours. Then I read a book.","برجع البيت وبذاكر ساعتين. وبعدين بقرأ كتاب."],
+   ["a","Do you watch TV in the evening?","بتتفرجي على التلفزيون بالليل؟"],
+   ["b","Yes. I watch TV with my family. Sometimes we play games, too.","أيوه. بتفرج مع عيلتي. وساعات بنلعب ألعاب كمان."],
+   ["a","Do you help your mother at home?","بتساعدي مامتك في البيت؟"],
+   ["b","Yes, I clean my room and sometimes cook dinner.","أيوه، بنضف أوضتي وساعات بطبخ العشا."],
+   ["a","What time do you work?","بتشتغلي الساعة كام؟"],
+   ["b","I don't work. I'm a student. But my father works in a shop.","أنا مش بشتغل. أنا طالبة. بس بابا بيشتغل في محل."],
+   ["a","What do you like doing after dinner?","بتحبي تعملي إيه بعد العشا؟"]],
+   quiz:[{"q": "What time does Sara get up?", "o": ["5 o'clock", "6 o'clock", "7 o'clock"], "a": 1}, {"q": "What does Sara eat for breakfast?", "o": ["eggs and bread", "pizza", "salad"], "a": 0}, {"q": "How does Sara go to school?", "o": ["by bus", "by car", "She walks."], "a": 2}, {"q": "What does Sara do after school?", "o": ["She studies for two hours.", "She plays football.", "She sleeps."], "a": 0}, {"q": "Where does her father work?", "o": ["in a hospital", "in a shop", "at a school"], "a": 1}],
+   fill:[[0, "get up"], [2, "shower"], [4, "eggs"], [6, "walk"], [8, "study"], [10, "family"], [12, "clean"]]}
+ ],
+ vocab:[
+  {t:'Morning', ar:'الصبح', items:[['⏰','get up','I get up at 6 o\'clock.'],['🚿','take a shower','I take a shower every morning.'],['🍳','have breakfast','I have breakfast with my family.'],['🚶','walk','I walk to school.'],['🏫','go','I go to school every day.'],['💼','work','My father works in a hospital.'],['🥛','drink','I drink milk.'],['🎒','make','I make my bag.']]},
+  {t:'Afternoon', ar:'بعد الظهر', items:[['📚','study','I study English.'],['📖','read','I read books.'],['✏️','write','I write new words.'],['📺','watch','I watch TV.'],['⚽','play','I play football.'],['🍽️','eat','I eat lunch at home.'],['🤝','help','I help my mother.'],['🏠','come','I come home at 2 o\'clock.']]},
+  {t:'Evening', ar:'بالليل', items:[['🍲','cook','I cook dinner.'],['🧹','clean','I clean my room.'],['🪑','sit','We sit together.'],['💬','talk','We talk together.'],['🎧','listen','I listen to music.'],['🛏️','go to bed','I go to bed at 10 o\'clock.'],['😴','sleep','I sleep well.'],['🧍','stand','Please stand up.']]}
+ ],
+ talk:[
+  {title:"Let's Talk · My Day", ar:'اتكلم عن يومك', list:[["What time do you get up?","بتصحى الساعة كام؟","I get up at 7 o'clock."],["What do you do in the morning?","بتعمل إيه الصبح؟","I have breakfast and go to school."],["How do you go to school or work?","بتروح المدرسة أو الشغل إزاي؟","I go to school by bus."],["What do you do in the evening?","بتعمل إيه بالليل؟","I watch TV and study."],["Which activities do you like? Why?","بتحب أنهي أنشطة؟ وليه؟","I like reading. It is fun."]]},
+  {title:"Let's Talk About You!", ar:'اتكلم عن نفسك', list:[["What do you usually have for breakfast?","بتفطر إيه عادة؟","I have eggs and bread."],["What do you do in the afternoon?","بتعمل إيه بعد الظهر؟","I study and play football."],["Do you like watching TV? What's your favorite show?","بتحب تتفرج على التلفزيون؟ إيه برنامجك المفضل؟","Yes, I do. I like cartoons."],["Do you help at home? What do you usually do?","بتساعد في البيت؟ بتعمل إيه؟","Yes. I clean my room."],["Do you play any sports? Which ones?","بتلعب رياضة؟ أنهي رياضة؟","I play football."],["What time do you go to bed?","بتنام الساعة كام؟","I go to bed at 10 o'clock."],["What do you want to do in the future?","عايز تعمل إيه في المستقبل؟","I want to be a doctor."]]}
+ ],
+ grammar:{title:'The Present Simple', ar:'المضارع البسيط — إمتى نضيف s وإمتى لأ', blocks:[
+  {type:'intro', en:'We use the present simple to talk about habits, facts and things that are always true.', ar:'بنستخدم المضارع البسيط للعادات والحقائق والحاجات اللي دايمًا صح.'},
+  {type:'big', items:[{v:'+ s',p:'he · she · it',c:2,eg:['He plays football.','She likes music.','It goes to school.']},{v:'no s',p:'I · you · we · they',c:1,eg:['I play football.','You like music.','They read books.']}]},
+  {type:'table', title:'✏️ Spelling rules (he / she / it)', head:['Rule','Examples'], rows:[['Add -s','play → plays, like → likes'],['Add -es after ch, sh, s, x, z, o','watch → watches, go → goes, fix → fixes'],['Consonant + y → ies','study → studies, try → tries'],['Vowel + y → just add -s','play → plays, enjoy → enjoys']]},
+  {type:'parts', title:'🧩 The parts of a sentence', ar:'أجزاء الجملة', parts:[['Ali','Subject','الفاعل'],['studies','Verb','الفعل'],['English','Object','المفعول'],['every day.','Extra information','معلومة إضافية']]},
+  {type:'list', title:'More examples', items:['I eat breakfast every day.','She drinks coffee.','He watches TV.','My brother studies at school.','They work in a hospital.','The cat sleeps all day.']},
+  {type:'tip', en:'He, she, it → add -s. I, you, we, they → no -s.', ar:'مع he / she / it زوّد s على الفعل — ومع I / you / we / they من غير s.'}]},
+ exercises:[
+  {type:'mcq',title:'Choose the correct verb',ar:'اختر الفعل الصحيح',speak:true,items:[{q:'She ___ to school by bus.',o:['go','goes'],a:1},{q:'I ___ breakfast at 7.',o:['have','has'],a:0},{q:'He ___ TV in the evening.',o:['watch','watches'],a:1},{q:'They ___ football after school.',o:['play','plays'],a:0},{q:'My sister ___ English.',o:['study','studies'],a:1},{q:'We ___ in Cairo.',o:['live','lives'],a:0},{q:'The cat ___ a lot.',o:['sleep','sleeps'],a:1}]},
+  {type:'mcq',title:'Spelling: add -s, -es or -ies',ar:'اختار التهجئة الصح مع he / she',speak:true,items:[{q:'watch → he ___',o:['watchs','watches'],a:1},{q:'study → she ___',o:['studies','studys'],a:0},{q:'play → he ___',o:['plaies','plays'],a:1},{q:'go → she ___',o:['goes','gos'],a:0},{q:'fix → he ___',o:['fixs','fixes'],a:1}]},
+  {type:'ord',title:'Make sentences',ar:'رتّب الكلمات',items:[{c:['I','at 6','get up'],a:[0,2,1]},{c:['She','to school','walks'],a:[0,2,1]},{c:['We','dinner','cook'],a:[0,2,1]},{c:['He','English','studies'],a:[0,2,1]},{c:['They','TV','watch'],a:[0,2,1]}]},
+  {type:'mcq',title:'Subject, verb or object?',ar:'الكلمة الملونة إيه؟',items:[{q:'*Ali* studies English.',o:['Subject','Verb','Object'],a:0},{q:'She *eats* breakfast.',o:['Subject','Verb','Object'],a:1},{q:'I read a *book*.',o:['Subject','Verb','Object'],a:2},{q:'*They* play games.',o:['Subject','Verb','Object'],a:0},{q:'He *goes* to school.',o:['Subject','Verb','Object'],a:1}]}
+ ],
+ reading:{title:'A Busy Day', ar:'يوم مزدحم', video:'video/u2r.mp4', poster:'img/u2r.jpg', g:'m', lines:[
+  ["My name is Adam. I am a student, and I have a busy day.","اسمي آدم. أنا طالب، وعندي يوم مزدحم."],["I get up at 6 o'clock. I take a shower and eat breakfast.","بصحى الساعة ٦. باخد دش وبفطر."],["I drink some milk and make my bag. Then I go to school.","بشرب لبن وبجهز شنطتي. وبعدين بروح المدرسة."],["I walk to school because I live near it.","بروح المدرسة مشي عشان ساكن قريب منها."],["At school, I do my lessons and study hard.","في المدرسة، بعمل دروسي وبذاكر كويس."],["I read English texts and write new words.","بقرأ نصوص إنجليزي وبكتب كلمات جديدة."],["I like English, and I want to be a teacher one day.","بحب الإنجليزي، وعايز أبقى مدرس في يوم من الأيام."],["In the afternoon, I come home. I watch TV for a short time and play games with my brother.","بعد الظهر برجع البيت. بتفرج على التلفزيون شوية وبلعب مع أخويا."],["Then I help my mother. I clean my room and cook dinner with her.","بعدين بساعد ماما. بنضف أوضتي وبطبخ معاها العشا."],["We sit and talk together.","بنقعد ونتكلم مع بعض."],["In the evening, I listen to music. I go to bed at 10 o'clock and sleep well.","بالليل بسمع موسيقى. بنام الساعة ١٠ ونومي كويس."],["I know tomorrow will be another great day!","أنا عارف إن بكرة هيبقى يوم حلو تاني!"]],
+  keys:[['⏰','6:00','get up'],['🚶','School','walk'],['📺','Afternoon','TV & games'],['🍲','Evening','cook dinner'],['🎧','Night','music'],['🛏️','10:00','go to bed']],
+  quiz:[{q:'What time does Adam get up?',o:["6 o'clock","7 o'clock","8 o'clock"],a:0},{q:'How does Adam go to school?',o:['by bus','He walks.','by car'],a:1},{q:'What does Adam want to be?',o:['a doctor','a teacher','a chef'],a:1},{q:'Who does Adam play games with?',o:['his brother','his sister','his friend'],a:0},{q:'What does Adam do in the evening?',o:['He listens to music.','He goes to school.','He plays football.'],a:0},{q:'What time does he go to bed?',o:["9 o'clock","10 o'clock","11 o'clock"],a:1}]},
+ sounds:{title:'Long vowels a e i o u', ar:'الحروف المتحركة الطويلة — بتنطق اسمها', video:'video/u2s.mp4', poster:'img/u2s.jpg',
+  tip:['Long vowels say their name: a, e, i, o, u.','الحرف المتحرك الطويل بيتنطق زي اسمه.'],
+  groups:[['a','/eɪ/','cake','#e5484d',[['🍰','cake'],['🏞️','lake'],['📅','May'],['🚪','gate']]],['e','/iː/','bee','#13a39a',[['🐝','bee'],['🌳','tree'],['🍃','leaf'],['🧀','cheese']]],['i','/aɪ/','bike','#f27f0c',[['🚲','bike'],['🪁','kite'],['💡','light'],['🌙','night']]],['o','/oʊ/','boat','#1d6bf3',[['⛵','boat'],['🛣️','road'],['🦴','bone'],['🏠','home']]],['u','/juː/','cube','#7b4fd6',[['🧊','cube'],['🧴','tube'],['🎵','music'],['🧑‍🎓','student']]]],
+  quiz:{title:'Listen and choose the long vowel',ar:'استمع واختر الصوت',opts:['a','e','i','o','u'],items:[['🍰','cake',0],['🐝','bee',1],['🚲','bike',2],['⛵','boat',3],['🧊','cube',4],['🌳','tree',1],['🪁','kite',2],['🏠','home',3]]}},
+ games:{pairs:[['⏰','get up'],['🚿','shower'],['📚','study'],['🍲','cook'],['🧹','clean'],['😴','sleep']],
+  spell:[['🍳','eat'],['📖','read'],['✏️','write'],['⚽','play'],['🍲','cook'],['🧹','clean'],['🚶','walk'],['😴','sleep']],
+  speed:[['She go to school.',false],['He watches TV.',true],['I gets up at 6.',false],['They play football.',true],['My mother cooks dinner.',true],['He study English.',false],['We live in Cairo.',true],['She likes music.',true],['I has breakfast.',false],['The cat sleeps a lot.',true],['They watches TV.',false],['He goes to bed at 10.',true],['She studys hard.',false],['I walk to school.',true],['You plays games.',false],['He helps his mother.',true]]},
+ test:{pass:60, sections:[
+  {id:'voc',title:'Vocabulary',ar:'المفردات',icon:'📚',qs:[{pic:'🚿',q:'I take a ___ every morning.',o:['shower','bed','book'],a:0},{pic:'🛏️',q:"I go to ___ at 10 o'clock.",o:['school','bed','work'],a:1},{pic:'📺',q:'I ___ TV in the evening.',o:['watch','read','cook'],a:0},{pic:'🧹',q:'I ___ my room.',o:['eat','clean','sleep'],a:1},{pic:'🍳',q:'I have ___ at 7.',o:['dinner','breakfast','lunch'],a:1},{q:'"بصحى الساعة ٦" in English is…',say:'Choose the correct sentence.',o:["I go to bed at 6.","I get up at 6.","I come home at 6."],a:1}]},
+  {id:'gra',title:'Grammar',ar:'القواعد',icon:'📘',qs:[{q:'She ___ to school every day.',o:['go','goes','going'],a:1},{q:'I ___ English.',o:['studies','study','studys'],a:1},{q:'He ___ TV at night.',o:['watchs','watch','watches'],a:2},{q:'They ___ football.',o:['plays','play','playes'],a:1},{q:'My father ___ in a hospital.',o:['works','work','working'],a:0},{q:'Choose the correct sentence.',o:['He get up at 7.','He gets up at 7.','He getting up at 7.'],a:1}]},
+  {id:'con',title:'Conversation',ar:'المحادثة',icon:'💬',qs:[{q:'"What time do you get up?" — Best answer:',o:['I walk to school.',"I get up at 7 o'clock.",'I like music.'],a:1},{q:'"How do you go to school?" — Best answer:',o:['I go by bus.','I go at 7.','I go to bed.'],a:0},{q:'"What do you do after school?" — Best answer:',o:['I am a student.','I study and play.','I am fine.'],a:1},{q:'"Do you cook dinner?" — Best answer:',o:["Yes, I do.","Yes, I am.","Yes, it is."],a:0},{q:'"That sounds like a busy day!" — Best answer:',o:['Yes, but I like it!','I am 10.','Nice to meet you.'],a:0}]},
+  {id:'rea',title:'Reading',ar:'القراءة',icon:'📖',passage:["Hi! I'm Nour. I get up at 7 o'clock.","I have breakfast and go to school by bus.","After school, I play with my friends.","In the evening, I study and help my mother.","I go to bed at 9 o'clock."],
+   qs:[{q:'What time does Nour get up?',o:["6 o'clock","7 o'clock","9 o'clock"],a:1},{q:'How does Nour go to school?',o:['by bus','She walks.','by car'],a:0},{q:'What does Nour do after school?',o:['She sleeps.','She plays with her friends.','She cooks.'],a:1},{q:'Who does Nour help?',o:['her mother','her father','her teacher'],a:0},{q:'What time does Nour go to bed?',o:["10 o'clock","8 o'clock","9 o'clock"],a:2}]},
+  {id:'wri',title:'Writing',ar:'الكتابة',icon:'✍️',writing:true,prompt:'Write about your day (40–80 words).',promptAr:'اكتب عن يومك (من ٤٠ لـ ٨٠ كلمة): بتصحى إمتى، بتعمل إيه الصبح، بعد المدرسة، وبالليل، وبتنام إمتى.',
+   checks:[['⏰',"I get up at …",'getup'],['🍳','I have breakfast…','breakfast'],['🏫','I go to school / work…','go'],['📚','After school I…','after'],['🌙','In the evening I…','evening'],['🛏️','I go to bed at …','bed']]}]}
+};
