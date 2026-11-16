@@ -16,6 +16,21 @@ const LEVELS=[
  {id:'b2p',ch:'img/char-wisy.png',chn:'Wisy',fam:'wisy',code:'B2+',en:'Upper-Intermediate Plus',ar:'فوق المتوسط المتقدم',ic:'🌟'},
  {id:'c1',ch:'img/char-wisy.png',chn:'Wisy',fam:'wisy',code:'C1',en:'Advanced',ar:'المتقدم',ic:'👑'}];
 const LV=id=>LEVELS.find(l=>l.id===id);
+/* ---- level packs: Pre A1 is the built-in UNITS/FINAL; other levels register in window.LEVEL_PACKS ---- */
+const PACKS=Object.assign({preA1:{units:Object.assign({},UNITS),final:Object.assign({},FINAL),cert:'Pre A1 – Beginner Level',home:'مستوى التأسيس — بداية قوية للكلام الحقيقي بالإنجليزي.',sub:'Beginner Level',spr:0,ch:'img/chatty.png'}},window.LEVEL_PACKS||{});
+Object.keys(PACKS).forEach(id=>{const l=LV(id);if(l&&id!=='preA1')l.ready=true;});
+let LVL='preA1';
+function useLevel(id){if(!PACKS[id]||id===LVL)return;LVL=id;const P=PACKS[id];
+  Object.keys(UNITS).forEach(k=>delete UNITS[k]);Object.assign(UNITS,P.units);
+  UNIT_LIST.splice(0,UNIT_LIST.length,...Object.keys(UNITS).map(Number).sort((a,b)=>a-b));
+  Object.keys(FINAL).forEach(k=>delete FINAL[k]);Object.assign(FINAL,P.final);}
+const PK=()=>PACKS[LVL];
+function withLevel(id,fn){const old=LVL;useLevel(id);try{return fn();}finally{useLevel(old);}}
+const KP=()=>LVL==='preA1'?'':LVL+'-';
+const H=path=>'#'+(LVL==='preA1'?'':LVL+'/')+path;
+const SPR=n=>(PK().spr||0)+n;
+function getFinal(prof){prof=prof||PROFILE;if(!prof)return null;return LVL==='preA1'?prof.final||null:((prof.finals||{})[LVL]||null);}
+function setFinal(v){if(LVL==='preA1')PROFILE.final=v;else{PROFILE.finals=PROFILE.finals||{};PROFILE.finals[LVL]=v;}}
 const LEGACY_BEFORE=1794868100000; /* students created before levels existed keep Pre A1 */
 
 /* ================= helpers ================= */
@@ -62,7 +77,7 @@ function pickVoice(g){if(!voices.length)loadV();let P=voices.filter(v=>/en[-_]US
   if(g&&g[0]==='m')return P.find(v=>/guy|andrew|brian|christopher|eric|davis|david|male/i.test(v.name)&&!/female/i.test(v.name))||P[0];
   return P.find(v=>/aria|jenny|ava|emma|samantha|zira|google us english|female/i.test(v.name))||P[0];}
 let curSrc=null, playTok=0;
-function findClip(k){for(const u of [CUR,0,8,...UNIT_LIST]){const m=AUDMAP[u];if(m&&m[k]&&BUF[u])return [u,m[k]];}return null;}
+function findClip(k){for(const u of [SPR(CUR),0,SPR(8),...UNIT_LIST.map(SPR)]){const m=AUDMAP[u];if(m&&m[k]&&BUF[u])return [u,m[k]];}return null;}
 function say(text,o={}){
   const st=speechText(text); if(!st){o.onend&&o.onend();return;}
   const v=VOICE[o.g]||'f'; const hit=findClip(audioKey(st,v))||findClip(audioKey(st,'f'));
@@ -132,7 +147,7 @@ const API={
   },
   async logout(){ if(ONLINE) await fauth.signOut(); else {L.me=null;lsave();USER=null;PROFILE=null;} },
   async refresh(){ if(ONLINE&&USER){const d=await fdb.collection('students').doc(USER.uid).get();PROFILE=d.exists?Object.assign({uid:USER.uid},d.data()):null;} else if(USER){PROFILE=L.students[USER.uid]||null;} },
-  saveProg(){ if(!PROFILE)return; if(ONLINE){fdb.collection('students').doc(USER.uid).set({prog:PROFILE.prog,tests:PROFILE.tests,final:PROFILE.final||null},{merge:true}).catch(e=>console.warn(e));} else {L.students[USER.uid]=PROFILE;lsave();} },
+  saveProg(){ if(!PROFILE)return; if(ONLINE){fdb.collection('students').doc(USER.uid).set({prog:PROFILE.prog,tests:PROFILE.tests,final:PROFILE.final||null,finals:PROFILE.finals||{}},{merge:true}).catch(e=>console.warn(e));} else {L.students[USER.uid]=PROFILE;lsave();} },
   async students(){ if(ONLINE){const q=await fdb.collection('students').get();return q.docs.map(d=>Object.assign({uid:d.id},d.data()));} return Object.values(L.students); },
   async setStatus(uid,st){ if(ONLINE) await fdb.collection('students').doc(uid).set({status:st},{merge:true}); else {L.students[uid].status=st;lsave();} },
   async loadSettings(){
@@ -173,12 +188,12 @@ const hasLevel=id=>isAdmin()||lvState(PROFILE,id).on;
 const fmtD=t=>new Date(t).toLocaleDateString('en-GB');
 
 /* ================= PROGRESS ================= */
-function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq','sq','game','test');return a;}
-function prog(n){PROFILE.prog=PROFILE.prog||{};PROFILE.prog['u'+n]=PROFILE.prog['u'+n]||{};return PROFILE.prog['u'+n];}
+function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq');if(u.sounds)a.push('sq');if(u.idioms)a.push('iq');if(u.challenge)a.push('ch');a.push('game','test');return a;}
+function prog(n){const k=KP()+'u'+n;PROFILE.prog=PROFILE.prog||{};PROFILE.prog[k]=PROFILE.prog[k]||{};return PROFILE.prog[k];}
 function done(n,a){if(!PROFILE)return;const p=prog(n);if(!p[a]){p[a]=1;API.saveProg();updateProg(n);}}
-function pctOf(prof,n){const p=(prof.prog||{})['u'+n]||{};const A=unitActs(n);return Math.round(A.filter(a=>p[a]).length/A.length*100);}
+function pctOf(prof,n){const p=(prof.prog||{})[KP()+'u'+n]||{};const A=unitActs(n);return Math.round(A.filter(a=>p[a]).length/A.length*100);}
 const pct=n=>PROFILE?pctOf(PROFILE,n):0;
-function testBest(n,prof){prof=prof||PROFILE;const t=(prof&&prof.tests||{})['u'+n];return t?t.best:null;}
+function testBest(n,prof){prof=prof||PROFILE;const t=(prof&&prof.tests||{})[KP()+'u'+n];return t?t.best:null;}
 function unlocked(n){ if(isAdmin()||!CFG.lockUnits||n===1) return true; const b=testBest(n-1); return b!==null&&b>=UNITS[n-1].test.pass; }
 function overall(){return Math.round(UNIT_LIST.reduce((s,n)=>s+pct(n),0)/UNIT_LIST.length);}
 function updateProg(n){
@@ -202,20 +217,22 @@ function render(){
   const lm=v.match(/^level-(\w+)$/);
   if(lm&&LV(lm[1])){const L1=LV(lm[1]);
     if(!hasLevel(L1.id)){vLevels();return subscribe(L1.id);}
-    if(!L1.ready){toast('⏳ ليفل '+L1.code+' هيتضاف قريب جدًا');return vLevels();}
-    return vHome();}
-  const m=v.match(/^unit-(\d)$/);
-  if((m||v==='final'||v==='certificate')&&!hasLevel('preA1')){vLevels();return subscribe('preA1');}
+    if(!PACKS[L1.id]){toast('⏳ ليفل '+L1.code+' هيتضاف قريب جدًا');return vLevels();}
+    useLevel(L1.id);return vHome();}
+  const pm=v.match(/^(\w+)\/(.*)$/);let rest=v;
+  if(pm&&PACKS[pm[1]]){useLevel(pm[1]);rest=pm[2];}else if(/^(unit-|final|certificate)/.test(v))useLevel('preA1');
+  const m=rest.match(/^unit-(\d)$/);
+  if((m||rest==='final'||rest==='certificate')&&!hasLevel(LVL)){vLevels();return subscribe(LVL);}
   if(m&&UNITS[+m[1]]){ if(!unlocked(+m[1])){toast('🔒 لازم تنجح في اختبار الوحدة اللي قبلها');return vHome();} return vUnit(+m[1]); }
-  if(v==='final') return vFinal();
-  if(v==='certificate') return vCert();
+  if(rest==='final') return vFinal();
+  if(rest==='certificate') return vCert();
   if(v==='champions'&&(PROFILE.status==='approved'||isAdmin())) return vChampions();
   return vLevels();
 }
 function topBar(back){
   const ini=(PROFILE?PROFILE.name:'?').trim().charAt(0).toUpperCase();
   return `<header class="top"><div class="in">
-   ${back?`<button class="pill p-mint" onclick="go('${typeof back==='string'?back:(/^#(unit|final|certificate)/.test(location.hash)?'level-preA1':'home')}')">← ${typeof back==='string'||!/^#(unit|final|certificate)/.test(location.hash)?'الرئيسية':'Pre A1'}</button>`:''}
+   ${back?(()=>{const inLv=/(^|\/)(unit-|final|certificate)/.test(location.hash.slice(1));const to=typeof back==='string'?back:(inLv?'level-'+LVL:'home');return `<button class="pill p-mint" onclick="go('${to}')">← ${inLv&&typeof back!=='string'?LV(LVL).code:'الرئيسية'}</button>`;})():''}
    <a class="logo" href="#home"><img src="img/icon-192.png" alt=""><span class="t"><b>LINGO <span>PLANET</span></b><small>DIAA MAGDY</small></span></a>
    <span class="sp"></span>
    ${isAdmin()?`<a class="pill p-g" href="#admin">👨‍🏫 Dashboard</a>`:''}
@@ -308,7 +325,7 @@ async function vAdmin(){
    ${q?'':`<div class="tabsx">${[['pending','🆕 جداد'],['active','✅ مشتركين'],['blocked','⛔ موقوفين']].map(t=>`<button class="${admTab===t[0]?'on':''}" onclick="admTab='${t[0]}';vAdmin()">${t[1]} (${cnt(t[0])})</button>`).join('')}</div>`}
    <div class="card">${L2.length?L2.map(s=>{const me=(s.email||'').toLowerCase()===ADMIN;return `<div class="stu" style="flex-wrap:wrap"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:180px"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.created?' · '+fmtD(s.created):''}</small>
       <div class="lchips">${LEVELS.map(l=>{const st=lvState(s,l.id);return `<button class="lchip ${st.on?'on':st.expired?'exp':''}" data-lv="${l.id}" data-uid="${esc(s.uid)}" data-name="${esc(s.name||'')}" title="${st.until?'لحد '+fmtD(st.until):''}">${st.on?'✅':st.expired?'⌛':'🔒'} ${l.code}${st.until?` <small>${fmtD(st.until)}</small>`:''}</button>`;}).join('')}</div>
-      ${lvState(s,'preA1').on?`<div class="mini-prog">${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${s.final?`<span>🎓 ${s.final.best}%</span>`:''}</div>`:''}</div>
+      ${Object.keys(PACKS).filter(id=>lvState(s,id).on).map(id=>withLevel(id,()=>{const f=getFinal(s);return `<div class="mini-prog"><span style="background:var(--g7);color:#fff">${LV(id).code}</span>${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${f?`<span>🎓 ${f.best}%</span>`:''}</div>`;})).join('')}</div>
       ${me?'':(s.status==='rejected'?`<button class="btn b-g" style="padding:8px 14px" data-st="approved" data-uid="${esc(s.uid)}">↩ Unblock</button>`:`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">⛔ Block</button>`)}
       ${owner&&!me?`<button class="btn b-w" style="padding:8px 12px" title="Delete" data-del="${esc(s.uid)}" data-name="${esc(s.name||'')}">🗑</button>`:''}</div>`;}).join('')
      :`<div class="pad ar" style="color:var(--mut);text-align:center">لا يوجد طلاب هنا.</div>`}</div>
@@ -342,24 +359,24 @@ async function vAdmin(){
 /* ================= HOME ================= */
 function vHome(){
   const first=PROFILE.name.split(' ')[0]; const done7=UNIT_LIST.filter(n=>{const b=testBest(n);return b!==null&&b>=UNITS[n].test.pass;}).length;
-  const finalOpen=isAdmin()||done7===UNIT_LIST.length; const fin=PROFILE.final;
+  const finalOpen=isAdmin()||done7===UNIT_LIST.length; const fin=getFinal();
   app.innerHTML=topBar('home')+`<main class="wrapc">
-   <section class="hero"><div class="tx"><span class="lv">Pre A1 · Beginner Level</span><h1>Hi, <span>${esc(first)}</span>! 👋</h1>
-     <p class="ar">مستوى التأسيس — بداية قوية للكلام الحقيقي بالإنجليزي.</p>
+   <section class="hero"><div class="tx"><span class="lv">${LV(LVL).code} · ${PK().sub}</span><h1>Hi, <span>${esc(first)}</span>! 👋</h1>
+     <p class="ar">${PK().home}</p>
      <div class="stats3"><div class="stat"><b data-progt="all">0%</b><small>Level progress</small></div><div class="stat"><b>${done7} / ${UNIT_LIST.length}</b><small>Tests passed</small></div><div class="stat"><b>${fin?fin.best+'%':'—'}</b><small>Final exam</small></div></div></div>
     <div class="bubble">Hi! I'm <b>Chatty</b> 🦜<br>Let's learn English together!</div>
-    <img class="ch" src="img/chatty.png" alt="Chatty" data-say="Hi! I'm Chatty. Let's learn English together!"></section>
+    <img class="ch" src="${PK().ch}" alt="Chatty" data-say="Hi! I'm Chatty. Let's learn English together!"></section>
    <h2 class="fred" style="color:var(--g7);margin:26px 0 4px">📚 Your units <span class="ar" style="font-size:15px;color:var(--mut)">· الوحدات</span></h2>
    <div class="ugrid">${UNIT_LIST.map(n=>{const u=UNITS[n],op=unlocked(n),p=pct(n),t=testBest(n);
-     return `<${op?'a':'div'} class="ucard ${op?'open':'lock'}" ${op?`href="#unit-${n}"`:`onclick="toast('🔒 انجح في اختبار الوحدة ${n-1} الأول')"`}>
+     return `<${op?'a':'div'} class="ucard ${op?'open':'lock'}" ${op?`href="${H('unit-'+n)}"`:`onclick="toast('🔒 انجح في اختبار الوحدة ${n-1} الأول')"`}>
       <div class="ucov" style="background-image:url(${u.cover})"><span>${u.icon}</span></div>
       <div class="num">UNIT ${n}</div><h3>${u.title}</h3><div class="ar">${u.ar}</div>
       <div class="bar"><i data-prog="${n}" style="width:${p}%"></i></div><div class="pc">${p}% done${t!==null?` · 📝 ${t}%`:''}</div></${op?'a':'div'}>`;}).join('')}</div>
    <div class="bigcards">
     <div class="bc bc-game"><h3>🏆 Champions</h3><p class="ar">أبطال التحديات — مين جايب أعلى سكور في كل لعبة.</p><a class="btn b-lime" href="#champions">شوف الأبطال</a><div class="em">🎮</div></div>
     <div class="bc bc-me"><h3>📈 My progress</h3><p class="ar">نسبة مذاكرتك في كل وحدة ونتايج اختباراتك.</p><button class="btn b-lime" onclick="openProfile()">حسابي</button><div class="em">🦜</div></div>
-    <div class="bc bc-exam"><h3>📝 Final Level Exam</h3><p class="ar">اختبار شامل: Listening · Vocabulary · Grammar · Reading · Writing — بيفتح بعد ما تنجح في الـ ${UNIT_LIST.length} وحدات.</p>${finalOpen?`<a class="btn b-lime" href="#final">▶ ابدأ الاختبار</a>`:`<button class="btn b-w" onclick="toast('🔒 انجح في اختبارات كل الوحدات الأول')">🔒 ${done7}/${UNIT_LIST.length}</button>`}<div class="em">🎯</div></div>
-    <div class="bc bc-cert"><h3>🎓 Level Certificate</h3><p class="ar">شهادة اجتياز المستوى PDF باسمك وتوقيع Mr. Diaa Magdy.</p>${(fin&&fin.best>=FINAL.pass)||isAdmin()?`<a class="btn b-w" href="#certificate">📄 ${isAdmin()&&!(fin&&fin.best>=FINAL.pass)?'معاينة الشهادة':'شهادتي'}</a>`:`<button class="btn b-w" onclick="toast('🎓 الشهادة بتطلع بعد النجاح في الاختبار النهائي')">🔒 Locked</button>`}<div class="em">📜</div></div>
+    <div class="bc bc-exam"><h3>📝 Final Level Exam</h3><p class="ar">اختبار شامل: Listening · Vocabulary · Grammar · Reading · Writing — بيفتح بعد ما تنجح في الـ ${UNIT_LIST.length} وحدات.</p>${finalOpen?`<a class="btn b-lime" href="${H('final')}">▶ ابدأ الاختبار</a>`:`<button class="btn b-w" onclick="toast('🔒 انجح في اختبارات كل الوحدات الأول')">🔒 ${done7}/${UNIT_LIST.length}</button>`}<div class="em">🎯</div></div>
+    <div class="bc bc-cert"><h3>🎓 Level Certificate</h3><p class="ar">شهادة اجتياز المستوى PDF باسمك وتوقيع Mr. Diaa Magdy.</p>${(fin&&fin.best>=FINAL.pass)||isAdmin()?`<a class="btn b-w" href="${H('certificate')}">📄 ${isAdmin()&&!(fin&&fin.best>=FINAL.pass)?'معاينة الشهادة':'شهادتي'}</a>`:`<button class="btn b-w" onclick="toast('🎓 الشهادة بتطلع بعد النجاح في الاختبار النهائي')">🔒 Locked</button>`}<div class="em">📜</div></div>
    </div><div class="foot">Lingo Planet · Diaa Magdy — Speak more · Learn better · Grow further</div></main>`;
   updateProg();
 }
@@ -369,7 +386,7 @@ async function openProfile(){
   openModal(`<div style="text-align:center"><img src="img/chatty.png" style="width:90px;margin:0 auto" alt=""><h2 class="fred" style="margin:4px 0 0;color:var(--g7)">${esc(PROFILE.name)}</h2><div style="color:var(--mut);font-weight:700">${esc(PROFILE.email)}</div></div>
    <div class="sub">📈 My progress <small>نسبة المذاكرة في كل وحدة</small></div>
    ${UNIT_LIST.map(n=>{const p=pct(n),t=testBest(n);return `<div class="rrow"><span class="e">${UNITS[n].icon}</span><b>Unit ${n} · ${UNITS[n].title}${t!==null?` <small style="color:var(--g5)">📝 ${t}%</small>`:''}</b><div class="bar"><i style="width:${p}%"></i></div><span class="s">${unlocked(n)?p+'%':'🔒'}</span></div>`;}).join('')}
-   <div class="rrow"><span class="e">🎓</span><b>Final exam</b><span class="s">${PROFILE.final?PROFILE.final.best+'%':'—'}</span></div>
+   <div class="rrow"><span class="e">🎓</span><b>Final exam · ${LV(LVL).code}</b><span class="s">${getFinal()?getFinal().best+'%':'—'}</span></div>
    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn b-w" onclick="closeModal();API.logout().then(render)">Log out</button></div>`);
 }
 function openModal(html,onClose){const m=$('#modal');$('#mbody').innerHTML=html;m.classList.add('on');m._close=onClose;}
@@ -448,10 +465,10 @@ function clockSVG(t){const [h,m]=t.split(':').map(Number);const ma=m*6,ha=(h%12)
 let vocabSeenSet=new Set();
 function vocabSeen(w){vocabSeenSet.add(w);if(vocabSeenSet.size>=6)done(CUR,'voc');}
 function vUnit(n){
-  CUR=n;loadSprite(n);const u=UNITS[n];Object.keys(S).forEach(k=>delete S[k]);vocabSeenSet=new Set();
-  const NAV=[u.videos.length&&['videos','🎬 Videos'],['vocab','📚 Words'],['talk','🗣️ Speaking'],['grammar','📘 Grammar'],['practice','✍️ Practice'],u.numbers&&['numbers','🔢 Numbers'],['reading','📖 Reading'],['sounds','🔤 Sounds'],['games','🎮 Games'],['test','📝 Unit Test']].filter(Boolean);
+  CUR=n;loadSprite(SPR(n));const u=UNITS[n];Object.keys(S).forEach(k=>delete S[k]);vocabSeenSet=new Set();
+  const NAV=[u.videos.length&&['videos','🎬 Videos'],['vocab','📚 Words'],['talk','🗣️ Speaking'],['grammar','📘 Grammar'],['practice','✍️ Practice'],u.numbers&&['numbers','🔢 Numbers'],['reading','📖 Reading'],u.sounds&&['sounds','🔤 Sounds'],u.idioms&&['idioms','💡 Idioms'],u.challenge&&['challenge','🎙️ Challenge'],['games','🎮 Games'],['test','📝 Unit Test']].filter(Boolean);
   let H=topBar(true)+`<main class="wrapc">
-   <section class="uhero" style="background-image:linear-gradient(110deg,rgba(10,33,22,.92),rgba(12,97,21,.85) 45%,rgba(29,148,13,.55)),url(${u.cover})"><div class="tx"><span class="k">UNIT ${n} · Pre A1</span><h1>${u.title} ${u.icon}</h1>
+   <section class="uhero" style="background-image:linear-gradient(110deg,rgba(10,33,22,.92),rgba(12,97,21,.85) 45%,rgba(29,148,13,.55)),url(${u.cover})"><div class="tx"><span class="k">UNIT ${n} · ${LV(LVL).code}</span><h1>${u.title} ${u.icon}</h1>
     <div class="ar" style="margin-top:8px;font-weight:700;color:#e4f6d6">${u.intro}</div><div class="uprog"><div class="bar"><i data-prog="${n}"></i></div><b data-progt="${n}">0%</b></div></div>
     <img class="ch" src="img/chatty.png" alt="" data-say="Welcome to unit ${n}! Tap any word to hear it."></section>
    <nav class="secnav" id="secnav"><button class="on" data-jump="all">📚 All · الكل</button>${NAV.map(x=>`<button data-jump="${x[0]}">${x[1]}</button>`).join('')}</nav>
@@ -489,9 +506,21 @@ function vUnit(n){
    ${makeEx('rq','?',{type:'mcq',title:'Reading questions',ar:'أسئلة على القطعة',items:R.quiz},'rq')}</section>`;
   /* sounds */
   const SN=u.sounds;
-  H+=`<section class="sec" id="s-sounds">${secH('🔤',SN.title,SN.ar,'sq')}${SN.video?`${videoPlayer(SN.video,SN.poster)}`:''}
+  if(SN)H+=`<section class="sec" id="s-sounds">${secH('🔤',SN.title,SN.ar,'sq')}${SN.video?`${videoPlayer(SN.video,SN.poster)}`:''}
    <div class="vwg" style="grid-template-columns:repeat(${Math.min(5,SN.groups.length)},1fr)">${SN.groups.map(v=>`<div class="vw" style="background:${v[3]}"><div class="L">${v[0]}</div><div class="ipa">${v[1]} · ${v[2]}</div><div class="ws">${v[4].map(x=>`<button class="w" data-w="${x[1]}"><i>${x[0]}</i>${x[1]}</button>`).join('')}</div></div>`).join('')}</div>
    ${tip(SN.tip[0],SN.tip[1])}${makeEx('sq','🎧',{type:'mcq',title:SN.quiz.title,ar:SN.quiz.ar,items:SN.quiz.items.map(([pic,w,a])=>({pic,say:w,o:SN.quiz.opts,a}))},'sq')}</section>`;
+  /* idioms */
+  if(u.idioms){const I=u.idioms;
+    H+=`<section class="sec" id="s-idioms">${secH('💡','Idiom Corner','تعبيرات إنجليزي زي ما أصحاب اللغة بيقولوها','iq')}
+     <div class="idg">${I.items.map(x=>`<div class="idc"><div class="row" style="flex-wrap:nowrap"><button class="spk sm" data-say="${esc(x[0])}">🔊</button><b class="idn">${T(x[0])}</b></div><div class="idm">${T(x[1])}</div><div class="ar">${x[2]}</div><div class="ide"><button class="mini" data-say="${esc(x[3])}">🔊</button> ${T(x[3])}</div><div class="ar" style="font-size:13px">${x[4]||''}</div></div>`).join('')}</div>
+     ${makeEx('iq','💡',{type:'mcq',title:'Use the idiom',ar:'اختار التعبير المناسب',items:I.quiz},'iq')}</section>`;}
+  /* speaking challenge */
+  if(u.challenge){const C=u.challenge;
+    H+=`<section class="sec" id="s-challenge">${secH('🎙️','Challenge: '+C.title,C.ar,'ch')}
+     <div class="card pad chal"><div class="ar" style="font-weight:800;margin-bottom:8px">🎯 TASK: ANSWER & RECORD — اختار ٥ أسئلة على الأقل، جاوب بصوتك وسجّل، وبعدين اسمع نفسك.</div>
+      <div class="row" style="margin-bottom:10px"><button class="btn b-red" id="recBtn">⏺ Record · سجّل</button><button class="btn b-soft" id="recStop" disabled>■ Stop</button><span id="recT" style="font-weight:900;color:var(--g7)"></span></div><div id="recList"></div>
+      <ol class="chq">${C.qs.map(q=>`<li><button class="mini" data-say="${esc(q)}">🔊</button> ${T(q)}</li>`).join('')}</ol></div>
+     ${tip('Speak for one minute. Use full sentences!','اتكلم دقيقة كاملة وجاوب بجمل كاملة — كل ما تتكلم أكتر هتتحسن أسرع 💪')}</section>`;}
   /* games */
   H+=`<section class="sec" id="s-games">${secH('🎮','Games & Challenges','العب وتحدّى زمايلك — أعلى سكور بيتكتب اسمه للكل','game')}
    <div class="ggrid"><div class="gcard gc1"><div class="em">🧠</div><h3>Memory Challenge</h3><p class="ar">وصّل كل كلمة بصورتها بأقل محاولات.</p><div class="best" id="best-memory">…</div><button class="btn b-lime" onclick="gMemory()">▶ Play</button></div>
@@ -509,7 +538,18 @@ function vUnit(n){
   $$('[data-talk]').forEach(i=>i.addEventListener('change',()=>{if($$('[data-talk]').filter(x=>x.value.trim()).length>=3)done(n,'talk');}));
   $$('video[data-vact]').forEach(v=>{v.addEventListener('play',()=>stopAll());v.addEventListener('timeupdate',()=>{if(v.duration&&v.currentTime/v.duration>.85)done(n,v.dataset.vact);});});
   $$('video').forEach(v=>v.addEventListener('play',()=>{stopAll();$$('video').forEach(o=>{if(o!==v)o.pause();});}));
-
+  if(u.challenge)wireRecorder(n);
+}
+let REC=null;
+function wireRecorder(n){const b=$('#recBtn'),st=$('#recStop'),tm=$('#recT');if(!b)return;
+  b.onclick=async()=>{if(!navigator.mediaDevices||!window.MediaRecorder){toast('🎙️ التسجيل مش مدعوم على الجهاز ده — جاوب بصوت عالي');done(n,'ch');return;}
+    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const ch=[];const mr=new MediaRecorder(stream);REC={mr,stream,t0:Date.now()};
+      mr.ondataavailable=e=>ch.push(e.data);mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());clearInterval(REC.iv);const url=URL.createObjectURL(new Blob(ch,{type:mr.mimeType}));const secs=Math.round((Date.now()-REC.t0)/1000);
+        $('#recList').insertAdjacentHTML('beforeend',`<div class="recit">🎧 <audio controls src="${url}"></audio><small>${secs}s</small></div>`);b.disabled=false;st.disabled=true;tm.textContent='';
+        if(secs>=20){done(n,'ch');toast('🌟 Great speaking! برافو');}else toast('⏱️ حاول تتكلم أكتر من ٢٠ ثانية');};
+      mr.start();b.disabled=true;st.disabled=false;REC.iv=setInterval(()=>{tm.textContent='⏺ '+Math.round((Date.now()-REC.t0)/1000)+'s';},500);
+    }catch(e){toast('🎙️ اسمح للمايك عشان تسجّل');}};
+  st.onclick=()=>{if(REC&&REC.mr.state==='recording')REC.mr.stop();};
 }
 function playLines(id){const u=UNITS[CUR],v=u.videos.find(x=>x.id===id);stopAll();$$('video').forEach(o=>o.pause());const tok=playTok;let i=0;
   const next=()=>{$$(`#tr-${id} .tline`).forEach(t=>t.classList.remove('now'));if(tok!==playTok||i>=v.lines.length)return;const el=$(`#tr-${id} [data-li="${i}"]`);el.classList.add('now');el.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -520,7 +560,7 @@ function renderVocab(g){const u=UNITS[CUR];
 function readAll(n){const R=UNITS[n].reading;stopAll();const tok=playTok;let i=0;const next=()=>{$$('.read p.now').forEach(p=>p.classList.remove('now'));if(tok!==playTok||i>=R.lines.length)return;const p=$('#rl-'+i);p.classList.add('now');say(R.lines[i][0],{g:R.g,onend:()=>{i++;setTimeout(next,300);}});};next();}
 
 /* ================= GAMES ================= */
-const gkey=g=>g+'-u'+CUR;
+const gkey=g=>KP()+g+'-u'+CUR;
 async function addScoreLB(game,score){done(CUR,'game');try{await API.addScore(gkey(game),score);}catch(e){console.warn(e);}delete SC_CACHE[gkey(game)];delete SC_CACHE['*'];renderBoard(game);renderBests();$$('#lbtabs button').forEach(b=>b.classList.toggle('on',b.dataset.lb===game));}
 const SC_CACHE={};
 async function topOf(key,fresh){const c=SC_CACHE[key||'*'];if(!fresh&&c&&Date.now()-c.t<180000)return c.v;let L2=[];try{L2=await API.scores(key);}catch(e){}L2.sort((a,b)=>b.score-a.score);SC_CACHE[key||'*']={t:Date.now(),v:L2};return L2;}
@@ -565,7 +605,7 @@ async function vChampions(){
   const all=await topOf(null);const tot={};all.forEach(x=>{tot[x.uid]=tot[x.uid]||{name:x.name,uid:x.uid,s:0,n:0};tot[x.uid].s+=x.score;tot[x.uid].n++;});
   const R=Object.values(tot).sort((a,b)=>b.s-a.s).slice(0,20);
   $('#champ').innerHTML=R.length?R.map((x,i)=>`<div class="lb ${x.uid===USER.uid?'me':''}"><span class="r">${i<3?['🥇','🥈','🥉'][i]:i+1}</span><b>${esc(x.name)} <small style="color:var(--mut)">· ${x.n} games</small></b><span class="s">${x.s}</span></div>`).join(''):`<div class="pad ar" style="text-align:center">لسه محدش لعب!</div>`;
-  $('#champ2').innerHTML=UNIT_LIST.map(n=>{const g=['memory','spell','speed'].map(k=>{const b=all.filter(x=>x.key===k+'-u'+n).sort((a,c)=>c.score-a.score)[0];return `<span class="chip">${{memory:'🧠',spell:'🔤',speed:'⚡'}[k]} ${b?esc(b.name)+' · '+b.score:'—'}</span>`;}).join('');return `<div class="sub">${UNITS[n].icon} Unit ${n} · ${UNITS[n].title}</div><div class="chips">${g}</div>`;}).join('');
+  $('#champ2').innerHTML=UNIT_LIST.map(n=>{const g=['memory','spell','speed'].map(k=>{const b=all.filter(x=>x.key===KP()+k+'-u'+n).sort((a,c)=>c.score-a.score)[0];return `<span class="chip">${{memory:'🧠',spell:'🔤',speed:'⚡'}[k]} ${b?esc(b.name)+' · '+b.score:'—'}</span>`;}).join('');return `<div class="sub">${UNITS[n].icon} Unit ${n} · ${UNITS[n].title}</div><div class="chips">${g}</div>`;}).join('');
 }
 
 /* ================= TESTS (unit + final) ================= */
@@ -586,33 +626,33 @@ function testRender(sel,T0,key,label){
    </div></div>`).join('')+`<div class="row" style="justify-content:center;margin:18px 0"><button class="btn b-or" style="font-size:18px;padding:14px 26px" onclick="testSubmit()">✔ Finish & see my result</button></div><div id="testRes"></div>`;
   $$('.opt[data-t]').forEach(b=>b.onclick=()=>{$$(`.opt[data-t="${b.dataset.t}"]`).forEach(x=>x.classList.remove('pick'));b.classList.add('pick');TA[b.dataset.t]=+b.dataset.k;});
   const ta=$('#essay');const W=T0.sections.find(s=>s.writing);
-  ta.addEventListener('input',()=>{const c=(ta.value.match(/[A-Za-z']+/g)||[]).length;const w=$('#wcount');w.textContent=c+' words';w.classList.toggle('okk',c>=40);const g=W.checks.map(c=>CHECK[c[2]]?CHECK[c[2]](ta.value):false);$$('#wchk span').forEach((sp,i)=>sp.classList.toggle('on',g[i]));});
+  ta.addEventListener('input',()=>{const c=(ta.value.match(/[A-Za-z']+/g)||[]).length;const w=$('#wcount');w.textContent=c+' words';w.classList.toggle('okk',c>=40);const g=W.checks.map(c=>CHECK[c[2]]?CHECK[c[2]](ta.value):(c[3]?new RegExp(c[3],'i').test(ta.value):false));$$('#wchk span').forEach((sp,i)=>sp.classList.toggle('on',g[i]));});
   ta.addEventListener('paste',e=>{e.preventDefault();toast('✍️ لازم تكتب بنفسك — اللصق مش مسموح');});ta.addEventListener('drop',e=>e.preventDefault());
   $(sel).scrollIntoView({behavior:'smooth'});
 }
 function testSubmit(){
-  const {T0,key,label,sel}=TST;const total=T0.sections.reduce((a,s)=>a+(s.qs?s.qs.length:0),0);const answered=Object.keys(TA).length;const essay=($('#essay').value||'').trim();
+  let {T0,key,label,sel}=TST;const total=T0.sections.reduce((a,s)=>a+(s.qs?s.qs.length:0),0);const answered=Object.keys(TA).length;const essay=($('#essay').value||'').trim();
   if((answered<total||essay.split(/\s+/).filter(Boolean).length<10)&&!testSubmit.w){testSubmit.w=true;toast(`⚠️ فاضل ${total-answered} سؤال${essay.length<10?' والكتابة':''} — اضغط تاني لو عايز تسلّم`);return;}
   testSubmit.w=false;const W=T0.sections.find(s=>s.writing);
   const secs=T0.sections.map(s=>{if(s.writing){const g=gradeEssay(essay,W.checks);return {s,got:g.score,tot:g.max,g};}
     let got=0;const rev=[];s.qs.forEach((it,i)=>{const a=TA[s.id+'-'+i];if(a===it.a)got++;else rev.push({q:s.listen?('🎧 '+it.audio):it.q,your:a===undefined?'—':it.o[a],right:it.o[it.a]});});return {s,got,tot:s.qs.length,rev};});
   const obj=secs.filter(x=>!x.g);const og=obj.reduce((a,x)=>a+x.got,0),ot=obj.reduce((a,x)=>a+x.tot,0);const Wg=secs.find(x=>x.g);
   const pc=Math.round(og/ot*80+Wg.got/Wg.tot*20);const pass=pc>=T0.pass;
-  if(key==='final'){const prev=PROFILE.final;PROFILE.final={best:Math.max(pc,prev?prev.best:0),last:pc,date:Date.now()};}
-  else{PROFILE.tests=PROFILE.tests||{};const prev=PROFILE.tests[key];PROFILE.tests[key]={best:Math.max(pc,prev?prev.best:0),last:pc,date:Date.now()};done(CUR,'test');}
+  if(key==='final'){const prev=getFinal();setFinal({best:Math.max(pc,prev?prev.best:0),last:pc,date:Date.now()});}
+  else{key=KP()+key;PROFILE.tests=PROFILE.tests||{};const prev=PROFILE.tests[key];PROFILE.tests[key]={best:Math.max(pc,prev?prev.best:0),last:pc,date:Date.now()};done(CUR,'test');}
   API.saveProg();
   const stars=pc>=90?'⭐⭐⭐':pc>=75?'⭐⭐☆':pc>=T0.pass?'⭐☆☆':'☆☆☆';LAST={pc,pass,secs,essay,date:new Date(),label,key};
   $$('.opt[data-t]').forEach(b=>{const [sid,i]=b.dataset.t.split('-');const it=T0.sections.find(s=>s.id===sid).qs[+i];b.disabled=true;if(+b.dataset.k===it.a)b.classList.add(b.classList.contains('pick')?'ok':'show');else if(b.classList.contains('pick'))b.classList.add('bad');});
   $('#essay').disabled=true;
-  const nextU=key.startsWith('u')?+key.slice(1)+1:0;
+  const nextU=/u\d+$/.test(key)?+key.match(/u(\d+)$/)[1]+1:0;
   $('#testRes').innerHTML=`<div class="result"><div class="res-top"><img class="ch" src="img/chatty.png" alt=""><div class="pc">${pc}%</div><div class="st">${stars}</div>
     <div class="pass ${pass?'y':'n'}">${pass?'✅ PASSED · ناجح':'❌ Try again · حاول تاني'}</div><div class="ar" style="margin-top:8px;color:#d6f0c6;font-weight:700">${pass?(key==='final'?'مبروك! شهادتك جاهزة 🎓':'برافو! كده فتحت الوحدة اللي بعدها 🎉'):'راجع الأجزاء اللي غلطت فيها وجرّب تاني 💪'}</div></div>
    <div class="res-b">${secs.map(x=>`<div class="rrow"><span class="e">${x.s.icon}</span><b>${x.s.title} <span class="ar" style="color:var(--mut);font-weight:600">· ${x.s.ar}</span></b><div class="bar"><i style="width:${x.got/x.tot*100}%"></i></div><span class="s">${x.got}/${x.tot}</span></div>`).join('')}
     ${essayFeedbackHTML(Wg.g,essay)}
     ${secs.some(x=>x.rev&&x.rev.length)?`<div class="fb"><h4>🔁 Review your mistakes · راجع أخطاءك</h4>${secs.filter(x=>x.rev).flatMap(x=>x.rev).map(r=>`<div class="rev">${esc(r.q)}<br><span class="neg">✖ ${esc(r.your)}</span> &nbsp; <span class="hl">✔ ${esc(r.right)}</span></div>`).join('')}</div>`:''}
     <div class="row" style="justify-content:center;margin-top:14px"><button class="btn b-g" id="pdfBtn" onclick="makePDF()">📄 Download PDF</button>
-     <a class="btn b-lime" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp||''}?text=${encodeURIComponent(`Lingo Planet · Pre A1 · ${label}\nName: ${PROFILE.name}\nScore: ${pc}% ${pass?'(Passed)':'(Not passed)'}\n${secs.map(x=>x.s.title+': '+x.got+'/'+x.tot).join('\n')}`)}">💬 WhatsApp</a>
-     ${pass&&key==='final'?`<a class="btn b-or" href="#certificate">🎓 My certificate</a>`:''}${pass&&nextU&&UNITS[nextU]?`<a class="btn b-or" href="#unit-${nextU}">▶ Unit ${nextU}</a>`:''}
+     <a class="btn b-lime" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp||''}?text=${encodeURIComponent(`Lingo Planet · ${LV(LVL).code} · ${label}\nName: ${PROFILE.name}\nScore: ${pc}% ${pass?'(Passed)':'(Not passed)'}\n${secs.map(x=>x.s.title+': '+x.got+'/'+x.tot).join('\n')}`)}">💬 WhatsApp</a>
+     ${pass&&key==='final'?`<a class="btn b-or" href="${H('certificate')}">🎓 My certificate</a>`:''}${pass&&nextU&&UNITS[nextU]?`<a class="btn b-or" href="${H('unit-'+nextU)}">▶ Unit ${nextU}</a>`:''}
      <button class="btn b-soft" onclick="testRender('${sel}',TST.T0,'${key}',TST.label)">↻ Retake</button></div></div></div>`;
   $('#testRes').scrollIntoView({behavior:'smooth'});speakNow(pass?'Congratulations! You passed!':'Good try! Practice and try again.');sfx(pass);
 }
@@ -635,7 +675,7 @@ let DICT=null;function known(w){DICT=DICT||new Set([...Object.keys(AR),...EXTRA,
 function gradeEssay(text,checks){
   const words=text.match(/[A-Za-z][A-Za-z']*/g)||[];const wc=words.length;const marks=[];
   const lenPts=wc>=40?4:wc>=30?3:wc>=20?2:wc>=10?1:0;
-  const cc=checks.map(c=>CHECK[c[2]]?CHECK[c[2]](text):false);const conPts=cc.filter(Boolean).length;
+  const cc=checks.map(c=>CHECK[c[2]]?CHECK[c[2]](text):(c[3]?new RegExp(c[3],'i').test(text):false));const conPts=cc.filter(Boolean).length;
   const GR=[[/\bI (is|are)\b/gi,'I am','مع I نستخدم am'],[/\b(he|she|it) (am|are)\b/gi,'… is','مع he/she/it نستخدم is'],[/\b(we|you|they) (am|is)\b/gi,'… are','مع we/you/they نستخدم are'],
    [/\bmy (father|mother|brother|sister|friend|teacher|dad|mom|cat|dog) (am|are)\b/gi,'my … is','مع شخص واحد نستخدم is'],
    [/\b(I|he|she|we|they|you) (\d+|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen) years\b/gi,'I am … years old','ناقص am / is / are قبل العمر'],
@@ -679,7 +719,7 @@ async function toPDF(el,filename,landscape){
   if(landscape||ih<=ph)pdf.addImage(img,'JPEG',0,0,pw,Math.min(ih,ph));else{let y=0;while(y<ih){pdf.addImage(img,'JPEG',0,-y,pw,ih);y+=ph;if(y<ih)pdf.addPage();}}
   await savePDF(pdf,filename);}
 function makePDF(){if(!LAST)return;const b=$('#pdfBtn');b.disabled=true;b.textContent='⏳ …';const Wg=LAST.secs.find(x=>x.g);
-  $('#report').innerHTML=`<div class="rep" id="repEl"><div class="rep-h"><img src="img/chatty.png" alt=""><div class="t"><b>LINGO PLANET</b><small>DIAA MAGDY · English Courses</small></div><div style="margin-inline-start:auto;text-align:end;font-weight:800"><div style="font-family:Fredoka;font-size:20px;color:#0C6115">Test Result</div>Pre A1 · ${esc(LAST.label)}</div></div>
+  $('#report').innerHTML=`<div class="rep" id="repEl"><div class="rep-h"><img src="img/chatty.png" alt=""><div class="t"><b>LINGO PLANET</b><small>DIAA MAGDY · English Courses</small></div><div style="margin-inline-start:auto;text-align:end;font-weight:800"><div style="font-family:Fredoka;font-size:20px;color:#0C6115">Test Result</div>${LV(LVL).code} · ${esc(LAST.label)}</div></div>
    <table><tr><th>Student</th><td>${esc(PROFILE.name)}</td><th>Date</th><td>${LAST.date.toLocaleDateString('en-GB')} ${LAST.date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td></tr><tr><th>Email</th><td>${esc(PROFILE.email)}</td><th>Total</th><td style="font-weight:900;font-size:18px;color:${LAST.pass?'#17a34a':'#e0384b'}">${LAST.pc}% — ${LAST.pass?'PASSED':'NOT PASSED'}</td></tr></table>
    <table><tr><th>Section</th><th>Score</th></tr>${LAST.secs.map(x=>`<tr><td>${x.s.icon} ${x.s.title}</td><td><b>${x.got} / ${x.tot}</b></td></tr>`).join('')}</table>
    <h3 style="font-family:Fredoka;color:#0C6115;margin:16px 0 6px">Writing</h3><div style="border:1px solid #d6e6c8;border-radius:10px;padding:10px;font-size:14px;line-height:1.6;white-space:pre-wrap">${esc(LAST.essay)||'—'}</div>
@@ -690,12 +730,12 @@ function makePDF(){if(!LAST)return;const b=$('#pdfBtn');b.disabled=true;b.textCo
 
 /* ================= FINAL EXAM ================= */
 function vFinal(){
-  loadSprite(8);
+  loadSprite(SPR(8));
   const done7=UNIT_LIST.every(n=>{const b=testBest(n);return b!==null&&b>=UNITS[n].test.pass;});
   if(!done7&&!isAdmin()){toast('🔒 انجح في كل الوحدات الأول');return vHome();}
-  app.innerHTML=topBar(true)+`<main class="wrapc"><div class="sec"><div class="sec-h"><div class="ic">🎯</div><div><h2>Final Level Exam · Pre A1</h2><div class="ar">الاختبار النهائي الشامل — Listening · Vocabulary · Grammar · Reading · Writing</div></div></div>
+  app.innerHTML=topBar(true)+`<main class="wrapc"><div class="sec"><div class="sec-h"><div class="ic">🎯</div><div><h2>Final Level Exam · ${LV(LVL).code}</h2><div class="ar">الاختبار النهائي الشامل — Listening · Vocabulary · Grammar · Reading · Writing</div></div></div>
    <div class="test-start"><h2 class="fred" style="margin:0;font-size:26px">Are you ready? 🎓</h2><div class="ar" style="color:#d6f0c6;font-weight:700;margin-top:4px">لو جبت ${FINAL.pass}% أو أكتر هتطلعلك شهادة اجتياز المستوى PDF باسمك.</div>
-    <ul>${FINAL.sections.map(s=>`<li>${s.icon} ${s.title}</li>`).join('')}</ul>${PROFILE.final?`<div style="font-weight:900;margin-bottom:10px">🏅 Best: ${PROFILE.final.best}%</div>`:''}
+    <ul>${FINAL.sections.map(s=>`<li>${s.icon} ${s.title}</li>`).join('')}</ul>${getFinal()?`<div style="font-weight:900;margin-bottom:10px">🏅 Best: ${getFinal().best}%</div>`:''}
     <button class="btn b-lime" style="font-size:17px" onclick="testRender('#finalArea',FINAL,'final','Final Level Exam')">▶ Start</button><img class="ch" src="img/chatty.png" alt=""></div><div id="finalArea"></div></div></main>`;
 }
 
@@ -704,18 +744,18 @@ function certHTML(name,score,date,id){
   return `<div class="cert" id="certEl"><div class="c1"></div><div class="c2"></div><div class="frame"></div><div class="frame2"></div><img class="chat" src="img/chatty.png" alt="">
    <div class="in"><div class="lg"><img src="img/icon-192.png" style="border-radius:18px" alt=""><div><b>LINGO PLANET</b><small>DIAA MAGDY · ENGLISH COURSES</small></div></div>
     <h1>CERTIFICATE</h1><div class="of">OF ACHIEVEMENT</div><div class="pr">This certificate is proudly presented to</div><div class="nm">${esc(name)}</div>
-    <div class="tx">for successfully completing <b>Pre A1 – Beginner Level</b> and passing the final level exam in Listening, Vocabulary, Grammar, Reading and Writing with a score of <b>${score}</b>.</div>
-    <div class="foot"><div class="fcol"><div style="font-size:18px">${date}</div><div class="ln">Date</div></div><div class="seal">PRE A1<br>PASSED<br>★★★</div><div class="fcol"><div class="sig">Diaa Magdy</div><div class="ln">Teacher & CEO<br>Diaa Magdy</div></div></div>
+    <div class="tx">for successfully completing <b>${PK().cert}</b> and passing the final level exam in Listening, Vocabulary, Grammar, Reading and Writing with a score of <b>${score}</b>.</div>
+    <div class="foot"><div class="fcol"><div style="font-size:18px">${date}</div><div class="ln">Date</div></div><div class="seal">${LV(LVL).code.toUpperCase()}<br>PASSED<br>★★★</div><div class="fcol"><div class="sig">Diaa Magdy</div><div class="ln">Teacher & CEO<br>Diaa Magdy</div></div></div>
     <div style="position:absolute;bottom:-34px;left:0;right:0;font-size:11px;color:#5d7366;font-weight:700">Certificate ID: ${id}</div></div></div>`;}
 function vCert(){
-  const f=PROFILE.final;const ok=f&&f.best>=FINAL.pass;
+  const f=getFinal();const ok=f&&f.best>=FINAL.pass;
   if(!ok&&!isAdmin()){toast('🎓 الشهادة بعد النجاح في الاختبار النهائي');return vHome();}
-  const d=new Date(ok?f.date:Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});const id='LP-PA1-'+(Math.abs([...(PROFILE.email||'x')].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))%900000+100000);const score=ok?f.best+'%':'— % (sample)';
+  const d=new Date(ok?f.date:Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});const id='LP-'+LV(LVL).code.replace(/\W/g,'').toUpperCase()+'-'+(Math.abs([...(PROFILE.email||'x')].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))%900000+100000);const score=ok?f.best+'%':'— % (sample)';
   app.innerHTML=topBar(true)+`<main class="wrapc"><div class="sec"><div class="sec-h"><div class="ic">🎓</div><div><h2>Level Certificate</h2><div class="ar">${ok?'مبروك! نزّل شهادتك PDF':'معاينة للمعلم — الطالب بيشوفها بعد النجاح'}</div></div></div>
    <div class="certwrap" id="cw"><div class="certprev" id="cp">${certHTML(PROFILE.name,score,d,id)}</div></div>
    <div class="row" style="justify-content:center;margin-top:16px"><button class="btn b-g" id="cdl">📄 Download PDF</button></div></div></main>`;
   const fit=()=>{const w=$('#cw');if(!w)return;const s=Math.min(1,w.clientWidth/1123);$('#cp').style.transform=`scale(${s})`;w.style.height=(794*s)+'px';};fit();addEventListener('resize',fit);
-  $('#cdl').onclick=()=>{$('#certBox').innerHTML=certHTML(PROFILE.name,score,d,id);const b=$('#cdl');b.disabled=true;toPDF($('#certBox #certEl'),`LingoPlanet_PreA1_Certificate_${PROFILE.name.replace(/\s+/g,'_')}.pdf`,true).finally(()=>b.disabled=false);};
+  $('#cdl').onclick=()=>{$('#certBox').innerHTML=certHTML(PROFILE.name,score,d,id);const b=$('#cdl');b.disabled=true;toPDF($('#certBox #certEl'),`LingoPlanet_${LV(LVL).code.replace(/\W/g,'')}_Certificate_${PROFILE.name.replace(/\s+/g,'_')}.pdf`,true).finally(()=>b.disabled=false);};
   if(ok) speakNow('Congratulations! You did it!');
 }
 
@@ -724,9 +764,9 @@ function collectSpeech(){
   const out=new Map();let cu=0;const add=(t,v)=>{t=speechText(t||'');if(!t)return;v=typeof v==='string'?v:'f';const k=audioKey(t,v);const id=cu+'|'+k;if(!out.has(id))out.set(id,{t,v,k,u:cu});};
   const words=s=>{(plain(s).match(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ']*|\d+/g)||[]).forEach(w=>add(/^\d+$/.test(w)?w:w.replace(/'+$/,'')));};
   const both=s=>{add(s);words(s);};
-  for(let i=1;i<=100;i++){add(nWord(i));}
+  if(LVL==='preA1')for(let i=1;i<=100;i++){add(nWord(i));}
   ["Hi! I'm Chatty. Let's learn English together!",'Great job!','Try again!','Congratulations! You passed!','Good try! Practice and try again.','Congratulations! You did it!','blank'].forEach(add);
-  UNIT_LIST.forEach(n=>{cu=n;const u=UNITS[n];add(`Welcome to unit ${n}! Tap any word to hear it.`);
+  UNIT_LIST.forEach(n=>{cu=SPR(n);const u=UNITS[n];add(`Welcome to unit ${n}! Tap any word to hear it.`);
     u.videos.forEach(v=>{v.lines.forEach(L=>{add(L[1],VOICE[v.sp[L[0]].g]);words(L[1]);});v.quiz.forEach(q=>{both(q.q);q.o.forEach(words);});});
     u.vocab.forEach(g=>g.items.forEach(([e,w,s])=>{add(w);both(s);}));
     u.talk.forEach(t=>t.list.forEach(q=>{both(q[0]);both(q[2]);}));
@@ -735,10 +775,12 @@ function collectSpeech(){
     u.exercises.forEach(x=>{x.items.forEach(it=>{if(x.type==='ord'){add(ordSentence(it));it.c.forEach(words);}else{both(plain(it.q));it.o.forEach(words);if(x.speak&&/_{2,}/.test(it.q))add(plain(it.q.replace(/_{2,}/,it.o[it.a]).replace(/ \(.*\)$/,'').replace(/ — .*$/,'')));}});});
     if(u.numbers)[13,50,18,46,72,19,89,100].forEach(k=>add(nWord(k)));
     u.reading.lines.forEach(l=>{add(l[0],VOICE[u.reading.g]||'f');words(l[0]);});u.reading.keys.forEach(k=>add(k[1]));u.reading.quiz.forEach(q=>{both(q.q);q.o.forEach(words);});
-    u.sounds.groups.forEach(g=>g.forEach&&g[4].forEach(x=>add(x[1])));u.sounds.quiz.items.forEach(i=>add(i[1]));words(u.sounds.tip[0]);
+    if(u.sounds){u.sounds.groups.forEach(g=>g.forEach&&g[4].forEach(x=>add(x[1])));u.sounds.quiz.items.forEach(i=>add(i[1]));words(u.sounds.tip[0]);}
+    if(u.idioms){u.idioms.items.forEach(x=>{both(x[0]);both(x[1]);both(x[3]);});u.idioms.quiz.forEach(q=>{both(plain(q.q));q.o.forEach(words);});}
+    if(u.challenge)u.challenge.qs.forEach(both);
     u.games.pairs.forEach(p=>add(p[1]));u.games.spell.forEach(p=>add(p[1]));u.games.speed.forEach(p=>words(p[0]));
     [u.test].forEach(T0=>T0.sections.forEach(s=>{if(s.passage){add(s.passage.join(' '));s.passage.forEach(words);}(s.qs||[]).forEach(q=>{if(s.listen)add(q.audio,VOICE[q.g]);else{add(q.say||q.q);words(q.q);}q.o.forEach(words);});if(s.writing)words(s.prompt);}));
-  });cu=8;[FINAL].forEach(T0=>T0.sections.forEach(s=>{if(s.passage){add(s.passage.join(' '));s.passage.forEach(words);}(s.qs||[]).forEach(q=>{if(s.listen)add(q.audio,VOICE[q.g]);else{add(q.say||q.q);words(q.q);}q.o.forEach(words);});if(s.writing)words(s.prompt);}));
+  });cu=SPR(8);[FINAL].forEach(T0=>T0.sections.forEach(s=>{if(s.passage){add(s.passage.join(' '));s.passage.forEach(words);}(s.qs||[]).forEach(q=>{if(s.listen)add(q.audio,VOICE[q.g]);else{add(q.say||q.q);words(q.q);}q.o.forEach(words);});if(s.writing)words(s.prompt);}));
   return [...out.values()];
 }
 
