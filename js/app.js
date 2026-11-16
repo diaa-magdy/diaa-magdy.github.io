@@ -5,6 +5,18 @@ const app=$('#app');
 const CFG=window.LP_CONFIG||{};
 const ADMIN=(CFG.adminEmail||'').toLowerCase();
 const UNIT_LIST=Object.keys(UNITS).map(Number).sort((a,b)=>a-b);
+const LEVELS=[
+ {id:'preA1',code:'Pre A1',en:'Foundation',ar:'التأسيس',ic:'🌱',ready:true},
+ {id:'a1p',code:'A1+',en:'Elementary Plus',ar:'المبتدئ المتقدم',ic:'🚀'},
+ {id:'a2',code:'A2',en:'Pre-Intermediate',ar:'ما قبل المتوسط',ic:'📗'},
+ {id:'a2p',code:'A2+',en:'Pre-Intermediate Plus',ar:'ما قبل المتوسط المتقدم',ic:'📘'},
+ {id:'b1',code:'B1',en:'Intermediate',ar:'المتوسط',ic:'💬'},
+ {id:'b1p',code:'B1+',en:'Intermediate Plus',ar:'المتوسط المتقدم',ic:'🎯'},
+ {id:'b2',code:'B2',en:'Upper-Intermediate',ar:'فوق المتوسط',ic:'🏅'},
+ {id:'b2p',code:'B2+',en:'Upper-Intermediate Plus',ar:'فوق المتوسط المتقدم',ic:'🌟'},
+ {id:'c1',code:'C1',en:'Advanced',ar:'المتقدم',ic:'👑'}];
+const LV=id=>LEVELS.find(l=>l.id===id);
+const LEGACY_BEFORE=1794868100000; /* students created before levels existed keep Pre A1 */
 
 /* ================= helpers ================= */
 function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200);}
@@ -92,20 +104,21 @@ document.addEventListener('click',e=>{
 
 /* ================= BACKEND (Firebase when configured, this device otherwise) ================= */
 const LKEY='lingo_planet_preA1_v3';
-let L={students:{},me:null,scores:{}};
+let L={students:{},me:null,scores:{},cfg:{phones:[],admins:[]}};
 try{const s=JSON.parse(localStorage.getItem(LKEY)||'null');if(s)L=Object.assign(L,s);}catch(e){}
 function lsave(){try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}}
 const ONLINE=!!(CFG.firebase&&window.firebase);
-let fdb=null, fauth=null, USER=null, PROFILE=null;
+let fdb=null, fauth=null, USER=null, PROFILE=null, SET={phones:[],admins:[]}, STAFF=false;
 const API={
   async init(cb){
     if(ONLINE){
       firebase.initializeApp(CFG.firebase); fauth=firebase.auth(); fdb=firebase.firestore();
       try{await fauth.getRedirectResult();}catch(e){console.warn(e);}
       fauth.onAuthStateChanged(async u=>{USER=u;PROFILE=null;
-        if(u){try{const d=await fdb.collection('students').doc(u.uid).get();PROFILE=d.exists?Object.assign({uid:u.uid},d.data()):null;}catch(e){console.warn(e);}}
+        if(u){try{const d=await fdb.collection('students').doc(u.uid).get();PROFILE=d.exists?Object.assign({uid:u.uid},d.data()):null;}catch(e){console.warn(e);}
+          await API.loadSettings();}
         cb();});
-    } else { USER=L.me?{uid:L.me,email:L.me}:null; PROFILE=USER?L.students[L.me]||null:null; cb(); }
+    } else { USER=L.me?{uid:L.me,email:L.me}:null; PROFILE=USER?L.students[L.me]||null:null; await API.loadSettings(); cb(); }
   },
   async google(){
     if(!ONLINE){return 'local';}
@@ -122,6 +135,21 @@ const API={
   saveProg(){ if(!PROFILE)return; if(ONLINE){fdb.collection('students').doc(USER.uid).set({prog:PROFILE.prog,tests:PROFILE.tests,final:PROFILE.final||null},{merge:true}).catch(e=>console.warn(e));} else {L.students[USER.uid]=PROFILE;lsave();} },
   async students(){ if(ONLINE){const q=await fdb.collection('students').get();return q.docs.map(d=>Object.assign({uid:d.id},d.data()));} return Object.values(L.students); },
   async setStatus(uid,st){ if(ONLINE) await fdb.collection('students').doc(uid).set({status:st},{merge:true}); else {L.students[uid].status=st;lsave();} },
+  async loadSettings(){
+    SET={phones:[],admins:[]};STAFF=false;
+    if(!ONLINE){SET={phones:(L.cfg.phones||[]).slice(),admins:(L.cfg.admins||[]).slice()};STAFF=!!USER&&SET.admins.includes((USER.email||'').toLowerCase());return;}
+    if(!USER)return;
+    try{const d=await fdb.collection('config').doc('public').get();if(d.exists)SET.phones=d.data().phones||[];}catch(e){console.warn(e);}
+    try{const d=await fdb.collection('config').doc('staff').get();if(d.exists){SET.admins=d.data().admins||[];STAFF=SET.admins.includes((USER.email||'').toLowerCase());}}catch(e){/* not staff */}
+  },
+  async saveSettings(){
+    if(ONLINE){await fdb.collection('config').doc('public').set({phones:SET.phones});await fdb.collection('config').doc('staff').set({admins:SET.admins});}
+    else{L.cfg={phones:SET.phones.slice(),admins:SET.admins.slice()};lsave();}
+  },
+  async setLevel(uid,id,val){
+    if(ONLINE){await fdb.collection('students').doc(uid).update({['levels.'+id]:val,status:'approved'});}
+    else{const st=L.students[uid];st.levels=st.levels||{};st.levels[id]=val;st.status='approved';lsave();}
+  },
   async remove(uid){ if(ONLINE) await fdb.collection('students').doc(uid).delete(); else {delete L.students[uid];lsave();} },
   async addScore(key,score){
     const id=USER.uid.replace(/[^\w@.-]/g,'_')+'_'+key; const row={uid:USER.uid,name:PROFILE.name,key,score,ts:Date.now()};
@@ -133,7 +161,16 @@ const API={
     return Object.values(L.scores).filter(x=>!key||x.key===key);
   }
 };
-const isAdmin=()=>USER&&ADMIN&&(USER.email||'').toLowerCase()===ADMIN;
+const isOwner=()=>!!(USER&&ADMIN&&(USER.email||'').toLowerCase()===ADMIN);
+const isAdmin=()=>isOwner()||STAFF;
+function lvState(prof,id){ /* returns {on, until, legacy} */
+  const e=((prof||{}).levels||{})[id];
+  if(e) return {on:!!e.on&&(!e.until||e.until>Date.now()),until:e.until||null,expired:!!(e.on&&e.until&&e.until<=Date.now())};
+  if(id==='preA1'&&prof&&prof.status==='approved'&&(prof.created||0)<LEGACY_BEFORE) return {on:true,until:null,legacy:true};
+  return {on:false,until:null};
+}
+const hasLevel=id=>isAdmin()||lvState(PROFILE,id).on;
+const fmtD=t=>new Date(t).toLocaleDateString('en-GB');
 
 /* ================= PROGRESS ================= */
 function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq','sq','game','test');return a;}
@@ -161,17 +198,24 @@ function render(){
   if(!USER) return vLogin();
   if(!PROFILE) return vProfileForm();
   if(v==='admin'&&isAdmin()) return vAdmin();
-  if(PROFILE.status!=='approved'&&!isAdmin()) return vPending();
-  const m=v.match(/^unit-(\d)$/); if(m&&UNITS[+m[1]]){ if(!unlocked(+m[1])){toast('🔒 لازم تنجح في اختبار الوحدة اللي قبلها');return vHome();} return vUnit(+m[1]); }
+  if(PROFILE.status==='rejected'&&!isAdmin()) return vPending();
+  const lm=v.match(/^level-(\w+)$/);
+  if(lm&&LV(lm[1])){const L1=LV(lm[1]);
+    if(!hasLevel(L1.id)){vLevels();return subscribe(L1.id);}
+    if(!L1.ready){toast('⏳ ليفل '+L1.code+' هيتضاف قريب جدًا');return vLevels();}
+    return vHome();}
+  const m=v.match(/^unit-(\d)$/);
+  if((m||v==='final'||v==='certificate')&&!hasLevel('preA1')){vLevels();return subscribe('preA1');}
+  if(m&&UNITS[+m[1]]){ if(!unlocked(+m[1])){toast('🔒 لازم تنجح في اختبار الوحدة اللي قبلها');return vHome();} return vUnit(+m[1]); }
   if(v==='final') return vFinal();
   if(v==='certificate') return vCert();
-  if(v==='champions') return vChampions();
-  return vHome();
+  if(v==='champions'&&(PROFILE.status==='approved'||isAdmin())) return vChampions();
+  return vLevels();
 }
 function topBar(back){
   const ini=(PROFILE?PROFILE.name:'?').trim().charAt(0).toUpperCase();
   return `<header class="top"><div class="in">
-   ${back?`<button class="pill p-mint" onclick="go('home')">← الرئيسية</button>`:''}
+   ${back?`<button class="pill p-mint" onclick="go('${typeof back==='string'?back:(/^#(unit|final|certificate)/.test(location.hash)?'level-preA1':'home')}')">← ${typeof back==='string'||!/^#(unit|final|certificate)/.test(location.hash)?'الرئيسية':'Pre A1'}</button>`:''}
    <a class="logo" href="#home"><img src="img/icon-192.png" alt=""><span class="t"><b>LINGO <span>PLANET</span></b><small>DIAA MAGDY</small></span></a>
    <span class="sp"></span>
    ${isAdmin()?`<a class="pill p-g" href="#admin">👨‍🏫 Dashboard</a>`:''}
@@ -188,7 +232,7 @@ function vLogin(){
    <div class="ar" style="color:var(--mut);font-weight:700">أهلًا بيك في أكاديمية Lingo Planet — Mr. Diaa Magdy. سجّل بحساب جوجل (الجيميل) بتاعك.</div>
    ${ONLINE?`<button class="btn b-w" style="width:100%;font-size:17px;margin-top:16px" onclick="API.google()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Sign in with Google · الدخول بجوجل</button>`
    :`<form id="rf"><label class="fld"><span>Your name · اسمك</span><input id="rn" required placeholder="Ahmed Ali"></label><label class="fld"><span>Gmail</span><input id="re" required type="email" placeholder="name@gmail.com"></label><div class="err" id="rerr"></div><button class="btn b-g" style="width:100%;font-size:17px">🚀 Join · سجّل</button></form>`}
-   <div class="note ar">🔒 التسجيل للطلاب المقبولين في الأكاديمية فقط — بعد التسجيل طلبك بيوصل للمستر ضياء ويوافق عليه.</div>
+   <div class="note ar">🔒 سجّل بالجيميل، وبعدها اختار الليفل اللي اشتركت فيه — بيتفتحلك بعد تفعيل الأدمن.</div>
   </div></div>`;
   const f=$('#rf'); if(f) f.onsubmit=async e=>{e.preventDefault();const name=$('#rn').value.trim(),email=$('#re').value.trim().toLowerCase();
     if(name.length<2){$('#rerr').textContent='اكتب اسمك';return;} if(!/^[^\s@]+@gmail\.com$/.test(email)){$('#rerr').textContent='لازم إيميل Gmail صحيح';return;}
@@ -199,47 +243,107 @@ function vProfileForm(){
    <h1>One more step! ✍️</h1><div class="ar" style="color:var(--mut);font-weight:700">اكتب اسمك بالإنجليزي زي ما هيتكتب في الشهادة.</div>
    <form id="pf"><label class="fld"><span>Full name · الاسم بالكامل</span><input id="pn" required value="${esc(USER.displayName||'')}" placeholder="Ahmed Ali"></label>
    <label class="fld"><span>Gmail</span><input value="${esc(USER.email||'')}" disabled></label><div class="err" id="perr"></div>
-   <button class="btn b-g" style="width:100%;font-size:17px">✅ Send request · إرسال الطلب</button></form>
+   <button class="btn b-g" style="width:100%;font-size:17px">✅ Start · ابدأ</button></form>
    <button class="btn b-soft" style="width:100%;margin-top:10px" onclick="API.logout().then(render)">حساب تاني</button></div></div>`;
   $('#pf').onsubmit=async e=>{e.preventDefault();const n=$('#pn').value.trim();if(n.length<3){$('#perr').textContent='اكتب اسمك كامل';return;}
     try{await API.register(n,USER.email);render();}catch(err){$('#perr').textContent='حصلت مشكلة، جرّب تاني';console.warn(err);}};
 }
+function waLink(phone,msg){return 'https://wa.me/'+String(phone).replace(/\D/g,'').replace(/^00/,'')+'?text='+encodeURIComponent(msg);}
+function contactBtns(msg){
+  if(!SET.phones.length) return `<div class="note ar">تواصل مع أكاديمية Lingo Planet لتفعيل اشتراكك.</div>`;
+  return `<div class="wa-list">${SET.phones.map(p=>`<a class="wa-btn" target="_blank" rel="noopener" href="${waLink(p.phone,msg)}"><span class="wi">💬</span><span><b>${esc(p.name||'Admin')}</b><small dir="ltr">+${esc(String(p.phone).replace(/\D/g,'').replace(/^00/,''))}</small></span><span class="go">واتساب ←</span></a>`).join('')}</div>`;
+}
+function subscribe(id){const L1=LV(id);
+  const msg=`السلام عليكم 👋\nعايز أشترك في ليفل ${L1.code} (${L1.ar}) في Lingo Planet.\nالاسم: ${PROFILE.name}\nالجيميل: ${PROFILE.email}`;
+  openModal(`<div style="text-align:center"><div style="font-size:54px">🔒</div><h2 class="fred" style="margin:0;color:var(--g7)">${L1.code} · ${L1.en}</h2><div class="ar" style="font-weight:800;color:var(--mut)">ليفل ${L1.ar}</div></div>
+   <div class="paybox ar"><b>💳 ادفع اشتراكك وافتح الليفل</b><br>كلّم أي حد من الأدمنز على الواتساب، وابعت <b>سكرين الدفع</b> مع الجيميل بتاعك:<div class="mail" dir="ltr">${esc(PROFILE.email)}</div>وهيتفتحلك الليفل على طول ✅</div>
+   ${contactBtns(msg)}
+   <div class="row" style="justify-content:center;margin-top:12px"><button class="btn b-soft" onclick="closeModal();API.refresh().then(render)">🔄 دفعت؟ اضغط هنا بعد التفعيل</button></div>`);
+}
 function vPending(){
-  const rej=PROFILE.status==='rejected';
+  const msg=`السلام عليكم، حسابي في Lingo Planet متوقف.\nالاسم: ${PROFILE.name}\nالجيميل: ${PROFILE.email}`;
   app.innerHTML=`<div class="auth"><div class="card box"><img class="chatty" src="img/chatty.png" alt="">
-   <h1>${rej?'Sorry 😔':'Almost there! ⏳'}</h1>
-   <div class="ar" style="font-weight:700;color:var(--mut);font-size:16px">${rej?'طلبك اترفض. تواصل مع الأكاديمية لو ده خطأ.':`أهلًا ${esc(PROFILE.name)}! طلبك وصل للمستر ضياء، وأول ما يوافق هتقدر تدخل الكورس.`}</div>
-   <div class="note" style="margin-top:14px">📧 ${esc(PROFILE.email)} · <span class="badge ${rej?'bd-r':'bd-p'}">${rej?'Rejected':'Waiting for approval'}</span></div>
+   <h1>Account paused ⛔</h1>
+   <div class="ar" style="font-weight:700;color:var(--mut);font-size:16px">حسابك متوقف حاليًا. لو ده خطأ كلّم الأكاديمية.</div>
+   <div class="note" style="margin-top:14px">📧 ${esc(PROFILE.email)}</div>
+   ${contactBtns(msg)}
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn b-g" onclick="API.refresh().then(render)">🔄 Check again</button><button class="btn b-w" onclick="API.logout().then(render)">Log out</button></div>
   </div></div>`;
 }
 
+/* ================= LEVELS HUB ================= */
+function vLevels(){
+  const first=(PROFILE.name||'').split(' ')[0];const open=LEVELS.filter(l=>hasLevel(l.id)).length;
+  app.innerHTML=topBar()+`<main class="wrapc">
+   <section class="hero"><div class="tx"><span class="lv">Lingo Planet · Pre A1 → C1</span><h1>Hi, <span>${esc(first)}</span>! 👋</h1>
+     <p class="ar">${open?'اختار الليفل بتاعك وكمّل رحلتك 🚀':'أهلًا بيك! اختار الليفل اللي عايز تبدأ بيه واشترك عشان يتفتحلك.'}</p>
+     <div class="stats3"><div class="stat"><b>${open}</b><small>Open levels</small></div><div class="stat"><b>${LEVELS.length}</b><small>All levels</small></div><div class="stat"><b data-progt="all">0%</b><small>Pre A1</small></div></div></div>
+    <div class="bubble">From <b>zero</b> to <b>C1</b> 🦜<br>Step by step!</div>
+    <img class="ch" src="img/chatty.png" alt="Chatty"></section>
+   <h2 class="fred" style="color:var(--g7);margin:26px 0 4px">🗺️ Levels <span class="ar" style="font-size:15px;color:var(--mut)">· المستويات</span></h2>
+   <div class="lgrid">${LEVELS.map((l,i)=>{const st=isAdmin()?{on:true}:lvState(PROFILE,l.id);const on=st.on;
+     const badge=on?(l.ready?`<span class="lb ok">✅ مفتوح</span>`:`<span class="lb soon">⏳ قريبًا</span>`):(st.expired?`<span class="lb lock">⌛ الاشتراك خلص · جدّد</span>`:`<span class="lb lock">🔒 ادفع اشتراكك</span>`);
+     return `<a class="lcard ${on?'on':'off'} lc${i}" href="#level-${l.id}"><div class="lic">${l.ic}</div><div class="lcode">${l.code}</div><div class="len">${l.en}</div><div class="lar ar">${l.ar}</div>${badge}${on&&st.until?`<div class="lexp">لحد ${fmtD(st.until)}</div>`:''}${l.id==='preA1'&&on?`<div class="bar"><i data-prog="all" style="width:0"></i></div>`:''}</a>`;}).join('')}</div>
+   <div class="bigcards">
+    ${PROFILE.status==='approved'||isAdmin()?`<div class="bc bc-game"><h3>🏆 Champions</h3><p class="ar">أبطال التحديات — مين جايب أعلى سكور.</p><a class="btn b-lime" href="#champions">شوف الأبطال</a><div class="em">🎮</div></div>`:''}
+    <div class="bc bc-me"><h3>💬 Subscribe · اشترك</h3><p class="ar">عايز تفتح ليفل جديد؟ كلّم الأدمن على الواتساب وابعت سكرين الدفع.</p><button class="btn b-lime" onclick="subscribe('${(LEVELS.find(l=>!hasLevel(l.id))||LEVELS[0]).id}')">كلّم الأدمن</button><div class="em">📲</div></div>
+   </div><div class="foot">Lingo Planet · Diaa Magdy — Speak more · Learn better · Grow further</div></main>`;
+  updateProg();
+}
+
 /* ================= ADMIN ================= */
-let admTab='pending';
+let admTab='pending',admQ='';
 async function vAdmin(){
-  app.innerHTML=topBar(true)+`<main class="adm"><div class="pad" style="text-align:center">⏳ Loading…</div></main>`;
+  app.innerHTML=topBar('home')+`<main class="adm"><div class="pad" style="text-align:center">⏳ Loading…</div></main>`;
   let S=[];try{S=await API.students();}catch(e){toast('⚠️ '+e.message);}
   S.sort((a,b)=>(b.created||0)-(a.created||0));
-  const cnt=k=>S.filter(s=>s.status===k).length; const L2=S.filter(s=>s.status===admTab);
-  $('.adm').innerHTML=`<div class="hero" style="min-height:0;padding:22px"><div class="tx" style="max-width:70%"><span class="lv">Teacher · Diaa Magdy</span><h1 style="font-size:30px">Students</h1><p class="ar">اقبل طلابك بس — اللي ترفضه أو توقفه (Block) مش هيقدر يدخل، و🗑 بتحذفه خالص.</p>
-    <div class="stats3"><div class="stat"><b>${cnt('pending')}</b><small>Waiting</small></div><div class="stat"><b>${cnt('approved')}</b><small>Approved</small></div><div class="stat"><b>${cnt('rejected')}</b><small>Rejected</small></div></div></div><img class="ch" src="img/chatty.png" alt="" style="width:150px"></div>
-   <div class="tabsx">${[['pending','⏳ في الانتظار'],['approved','✅ المقبولين'],['rejected','⛔ المرفوضين']].map(t=>`<button class="${admTab===t[0]?'on':''}" onclick="admTab='${t[0]}';vAdmin()">${t[1]} (${cnt(t[0])})</button>`).join('')}</div>
-   <div class="card">${L2.length?L2.map(s=>`<div class="stu"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:0"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.created?' · '+new Date(s.created).toLocaleDateString('en-GB'):''}</small>
-      ${s.status==='approved'?`<div class="mini-prog">${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${s.final?`<span>🎓 ${s.final.best}%</span>`:''}</div>`:''}</div>
-      ${s.status!=='approved'?`<button class="btn b-g" style="padding:8px 14px" data-st="approved" data-uid="${esc(s.uid)}">✔ Accept</button>`:''}
-      ${s.status!=='rejected'&&(s.email||'').toLowerCase()!==ADMIN?`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">${s.status==='approved'?'⛔ Block':'✖ Reject'}</button>`:''}
-      ${(s.email||'').toLowerCase()!==ADMIN?`<button class="btn b-w" style="padding:8px 12px" title="Delete" data-del="${esc(s.uid)}" data-name="${esc(s.name||'')}">🗑</button>`:''}</div>`).join('')
+  const grp=s=>s.status==='rejected'?'blocked':(LEVELS.some(l=>lvState(s,l.id).on)?'active':'pending');
+  const cnt=k=>S.filter(s=>grp(s)===k).length;
+  const q=admQ.trim().toLowerCase();
+  const L2=S.filter(s=>q?((s.email||'').toLowerCase().includes(q)||(s.name||'').toLowerCase().includes(q)):grp(s)===admTab);
+  const owner=isOwner();
+  $('.adm').innerHTML=`<div class="hero" style="min-height:0;padding:22px"><div class="tx" style="max-width:70%"><span class="lv">${owner?'Teacher & CEO · Diaa Magdy':'Admin · '+esc(USER.email)}</span><h1 style="font-size:30px">Students</h1><p class="ar">دوّر بالجيميل، واضغط على الليفل اللي الطالب دفعه عشان يتفتحله ✅ — ودوس تاني عشان تقفله.</p>
+    <div class="stats3"><div class="stat"><b>${cnt('pending')}</b><small>New</small></div><div class="stat"><b>${cnt('active')}</b><small>Subscribed</small></div><div class="stat"><b>${cnt('blocked')}</b><small>Blocked</small></div></div></div><img class="ch" src="img/chatty.png" alt="" style="width:150px"></div>
+   <input class="inp" id="admq" placeholder="🔎 ابحث بالجيميل أو الاسم…" value="${esc(admQ)}" style="width:100%;margin:6px 0">
+   ${q?'':`<div class="tabsx">${[['pending','🆕 جداد'],['active','✅ مشتركين'],['blocked','⛔ موقوفين']].map(t=>`<button class="${admTab===t[0]?'on':''}" onclick="admTab='${t[0]}';vAdmin()">${t[1]} (${cnt(t[0])})</button>`).join('')}</div>`}
+   <div class="card">${L2.length?L2.map(s=>{const me=(s.email||'').toLowerCase()===ADMIN;return `<div class="stu" style="flex-wrap:wrap"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:180px"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.created?' · '+fmtD(s.created):''}</small>
+      <div class="lchips">${LEVELS.map(l=>{const st=lvState(s,l.id);return `<button class="lchip ${st.on?'on':st.expired?'exp':''}" data-lv="${l.id}" data-uid="${esc(s.uid)}" data-name="${esc(s.name||'')}" title="${st.until?'لحد '+fmtD(st.until):''}">${st.on?'✅':st.expired?'⌛':'🔒'} ${l.code}${st.until?` <small>${fmtD(st.until)}</small>`:''}</button>`;}).join('')}</div>
+      ${lvState(s,'preA1').on?`<div class="mini-prog">${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${s.final?`<span>🎓 ${s.final.best}%</span>`:''}</div>`:''}</div>
+      ${me?'':(s.status==='rejected'?`<button class="btn b-g" style="padding:8px 14px" data-st="approved" data-uid="${esc(s.uid)}">↩ Unblock</button>`:`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">⛔ Block</button>`)}
+      ${owner&&!me?`<button class="btn b-w" style="padding:8px 12px" title="Delete" data-del="${esc(s.uid)}" data-name="${esc(s.name||'')}">🗑</button>`:''}</div>`;}).join('')
      :`<div class="pad ar" style="color:var(--mut);text-align:center">لا يوجد طلاب هنا.</div>`}</div>
-   <div class="row" style="justify-content:center;margin:16px 0"><a class="btn b-soft" href="#champions">🏆 لوحة الأبطال</a><a class="btn b-soft" href="#home">📚 الكورس</a></div>`;
-  $$('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('حذف الطالب "'+b.dataset.name+'" نهائيًا؟ لو حاول يدخل تاني هيرجع في قائمة الانتظار.'))return;b.disabled=true;try{await API.remove(b.dataset.del);toast('🗑 تم حذف الطالب');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
-  $$('[data-st]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API.setStatus(b.dataset.uid,b.dataset.st);toast(b.dataset.st==='approved'?'✅ تم قبول الطالب':'⛔ تم الرفض');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
+   ${owner?`<div class="card pad" style="margin-top:16px"><div class="sub">📞 أرقام الأدمنز <small>بتظهر للطالب لما يدوس على ليفل مقفول</small></div>
+     <div id="phl">${SET.phones.map((p,i)=>`<div class="setrow"><b>${esc(p.name)}</b><span dir="ltr">+${esc(String(p.phone).replace(/\D/g,''))}</span><button class="mini" data-delph="${i}">✖</button></div>`).join('')||'<div class="ar" style="color:var(--mut)">مفيش أرقام لسه.</div>'}</div>
+     <div class="row" style="margin-top:8px"><input class="inp" id="phn" placeholder="الاسم (مثلًا: Mr. Diaa)" style="flex:1;min-width:140px"><input class="inp" id="php" dir="ltr" placeholder="201001234567" style="flex:1;min-width:140px"><button class="btn b-g" id="phadd">➕ إضافة</button></div>
+     <div class="ar" style="color:var(--mut);font-size:13px;margin-top:4px">اكتب الرقم بكود الدولة من غير + (مصر: 20… · السعودية: 966…)</div>
+     <div class="sub" style="margin-top:22px">👥 الأدمنز المساعدين <small>يقدروا يفتحوا الليفلات ويوقفوا الطلاب — مش بيقدروا يحذفوا أو يغيروا الإعدادات</small></div>
+     <div>${SET.admins.map((e,i)=>`<div class="setrow"><b dir="ltr">${esc(e)}</b><button class="mini" data-delad="${i}">✖</button></div>`).join('')||'<div class="ar" style="color:var(--mut)">مفيش أدمنز مساعدين لسه.</div>'}</div>
+     <div class="row" style="margin-top:8px"><input class="inp" id="ade" dir="ltr" type="email" placeholder="assistant@gmail.com" style="flex:1;min-width:200px"><button class="btn b-g" id="adadd">➕ إضافة أدمن</button></div></div>`:''}
+   <div class="row" style="justify-content:center;margin:16px 0"><a class="btn b-soft" href="#champions">🏆 لوحة الأبطال</a><a class="btn b-soft" href="#home">📚 الليفلات</a></div>`;
+  const qi=$('#admq');qi.oninput=()=>{admQ=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{const pos=qi.selectionStart;vAdmin().then(()=>{const n=$('#admq');n.focus();n.setSelectionRange(pos,pos);});},350);};
+  $$('[data-lv]').forEach(b=>b.onclick=()=>{const id=b.dataset.lv,uid=b.dataset.uid,L1=LV(id),s=S.find(x=>x.uid===uid),st=lvState(s,id);
+    if(st.on){if(!confirm(`قفل ليفل ${L1.code} عن ${b.dataset.name}؟`))return;API.setLevel(uid,id,{on:false,by:USER.email,at:Date.now()}).then(()=>{toast('🔒 اتقفل');vAdmin();}).catch(e=>toast('⚠️ '+e.message));return;}
+    openModal(`<h2 class="fred" style="color:var(--g7);margin:0 0 6px">✅ فتح ${L1.code} · ${L1.ar}</h2><div class="ar" style="font-weight:700">للطالب: <b>${esc(b.dataset.name)}</b></div>
+      <label class="fld" style="margin-top:12px"><span>ينتهي الاشتراك يوم (اختياري)</span><input type="date" id="lvu"></label><div class="ar" style="color:var(--mut);font-size:13px">سيبه فاضي = مفتوح على طول.</div>
+      <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn b-w" onclick="closeModal()">إلغاء</button><button class="btn b-g" id="lvok">✅ افتح الليفل</button></div>`);
+    $('#lvok').onclick=async()=>{const d=$('#lvu').value;const until=d?new Date(d+'T23:59:59').getTime():null;$('#lvok').disabled=true;
+      try{await API.setLevel(uid,id,{on:true,until,by:USER.email,at:Date.now()});closeModal();toast('✅ اتفتح ليفل '+L1.code);}catch(e){toast('⚠️ '+e.message);}vAdmin();};});
+  $$('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('حذف الطالب "'+b.dataset.name+'" نهائيًا؟ لو حاول يدخل تاني هيرجع كطالب جديد.'))return;b.disabled=true;try{await API.remove(b.dataset.del);toast('🗑 تم حذف الطالب');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
+  $$('[data-st]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API.setStatus(b.dataset.uid,b.dataset.st);toast(b.dataset.st==='approved'?'↩ اترجع':'⛔ اتوقف');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
+  if(owner){
+    const save=async m=>{try{await API.saveSettings();toast(m);}catch(e){toast('⚠️ '+e.message);}vAdmin();};
+    $('#phadd').onclick=()=>{const n=$('#phn').value.trim(),ph=$('#php').value.replace(/\D/g,'').replace(/^00/,'');if(!n||ph.length<9){toast('اكتب الاسم والرقم بكود الدولة');return;}SET.phones.push({name:n,phone:ph});save('✅ اتضاف الرقم');};
+    $$('[data-delph]').forEach(b=>b.onclick=()=>{SET.phones.splice(+b.dataset.delph,1);save('اتشال الرقم');});
+    $('#adadd').onclick=()=>{const e=$('#ade').value.trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[a-z]+$/.test(e)){toast('اكتب جيميل صحيح');return;}if(e===ADMIN||SET.admins.includes(e))return;SET.admins.push(e);save('✅ اتضاف الأدمن');};
+    $$('[data-delad]').forEach(b=>b.onclick=()=>{SET.admins.splice(+b.dataset.delad,1);save('اتشال الأدمن');});
+  }
 }
 
 /* ================= HOME ================= */
 function vHome(){
   const first=PROFILE.name.split(' ')[0]; const done7=UNIT_LIST.filter(n=>{const b=testBest(n);return b!==null&&b>=UNITS[n].test.pass;}).length;
   const finalOpen=isAdmin()||done7===UNIT_LIST.length; const fin=PROFILE.final;
-  app.innerHTML=topBar()+`<main class="wrapc">
+  app.innerHTML=topBar('home')+`<main class="wrapc">
    <section class="hero"><div class="tx"><span class="lv">Pre A1 · Beginner Level</span><h1>Hi, <span>${esc(first)}</span>! 👋</h1>
      <p class="ar">مستوى التأسيس — بداية قوية للكلام الحقيقي بالإنجليزي.</p>
      <div class="stats3"><div class="stat"><b data-progt="all">0%</b><small>Level progress</small></div><div class="stat"><b>${done7} / ${UNIT_LIST.length}</b><small>Tests passed</small></div><div class="stat"><b>${fin?fin.best+'%':'—'}</b><small>Final exam</small></div></div></div>
