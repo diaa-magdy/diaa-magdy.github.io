@@ -6,15 +6,15 @@ const CFG=window.LP_CONFIG||{};
 const ADMIN=(CFG.adminEmail||'').toLowerCase();
 const UNIT_LIST=Object.keys(UNITS).map(Number).sort((a,b)=>a-b);
 const LEVELS=[
- {id:'preA1',code:'Pre A1',en:'Foundation',ar:'التأسيس',ic:'🌱',ready:true},
- {id:'a1p',code:'A1+',en:'Elementary Plus',ar:'المبتدئ المتقدم',ic:'🚀'},
- {id:'a2',code:'A2',en:'Pre-Intermediate',ar:'ما قبل المتوسط',ic:'📗'},
- {id:'a2p',code:'A2+',en:'Pre-Intermediate Plus',ar:'ما قبل المتوسط المتقدم',ic:'📘'},
- {id:'b1',code:'B1',en:'Intermediate',ar:'المتوسط',ic:'💬'},
- {id:'b1p',code:'B1+',en:'Intermediate Plus',ar:'المتوسط المتقدم',ic:'🎯'},
- {id:'b2',code:'B2',en:'Upper-Intermediate',ar:'فوق المتوسط',ic:'🏅'},
- {id:'b2p',code:'B2+',en:'Upper-Intermediate Plus',ar:'فوق المتوسط المتقدم',ic:'🌟'},
- {id:'c1',code:'C1',en:'Advanced',ar:'المتقدم',ic:'👑'}];
+ {id:'preA1',ch:'img/char-chatty.png',chn:'Chatty',fam:'chatty',code:'Pre A1',en:'Foundation',ar:'التأسيس',ic:'🌱',ready:true},
+ {id:'a1p',ch:'img/char-chatty.png',chn:'Chatty',fam:'chatty',code:'A1+',en:'Elementary Plus',ar:'المبتدئ المتقدم',ic:'🚀'},
+ {id:'a2',ch:'img/char-speaky.png',chn:'Speaky',fam:'speaky',code:'A2',en:'Pre-Intermediate',ar:'ما قبل المتوسط',ic:'📗'},
+ {id:'a2p',ch:'img/char-speaky.png',chn:'Speaky',fam:'speaky',code:'A2+',en:'Pre-Intermediate Plus',ar:'ما قبل المتوسط المتقدم',ic:'📘'},
+ {id:'b1',ch:'img/char-talky.png',chn:'Talky',fam:'talky',code:'B1',en:'Intermediate',ar:'المتوسط',ic:'💬'},
+ {id:'b1p',ch:'img/char-talky.png',chn:'Talky',fam:'talky',code:'B1+',en:'Intermediate Plus',ar:'المتوسط المتقدم',ic:'🎯'},
+ {id:'b2',ch:'img/char-wisy.png',chn:'Wisy',fam:'wisy',code:'B2',en:'Upper-Intermediate',ar:'فوق المتوسط',ic:'🏅'},
+ {id:'b2p',ch:'img/char-wisy.png',chn:'Wisy',fam:'wisy',code:'B2+',en:'Upper-Intermediate Plus',ar:'فوق المتوسط المتقدم',ic:'🌟'},
+ {id:'c1',ch:'img/char-wisy.png',chn:'Wisy',fam:'wisy',code:'C1',en:'Advanced',ar:'المتقدم',ic:'👑'}];
 const LV=id=>LEVELS.find(l=>l.id===id);
 const LEGACY_BEFORE=1794868100000; /* students created before levels existed keep Pre A1 */
 
@@ -255,7 +255,7 @@ function contactBtns(msg){
 }
 function subscribe(id){const L1=LV(id);
   const msg=`السلام عليكم 👋\nعايز أشترك في ليفل ${L1.code} (${L1.ar}) في Lingo Planet.\nالاسم: ${PROFILE.name}\nالجيميل: ${PROFILE.email}`;
-  openModal(`<div style="text-align:center"><div style="font-size:54px">🔒</div><h2 class="fred" style="margin:0;color:var(--g7)">${L1.code} · ${L1.en}</h2><div class="ar" style="font-weight:800;color:var(--mut)">ليفل ${L1.ar}</div></div>
+  openModal(`<div style="text-align:center"><div class="subav"><img src="${L1.ch}" alt=""><span>🔒</span></div><div style="font-weight:900;color:var(--mut)">${L1.chn} ${L1.ic}</div><h2 class="fred" style="margin:0;color:var(--g7)">${L1.code} · ${L1.en}</h2><div class="ar" style="font-weight:800;color:var(--mut)">ليفل ${L1.ar}</div></div>
    <div class="paybox ar"><b>💳 ادفع اشتراكك وافتح الليفل</b><br>كلّم أي حد من الأدمنز على الواتساب، وابعت <b>سكرين الدفع</b> مع الجيميل بتاعك:<div class="mail" dir="ltr">${esc(PROFILE.email)}</div>وهيتفتحلك الليفل على طول ✅</div>
    ${contactBtns(msg)}
    <div class="row" style="justify-content:center;margin-top:12px"><button class="btn b-soft" onclick="closeModal();API.refresh().then(render)">🔄 دفعت؟ اضغط هنا بعد التفعيل</button></div>`);
@@ -283,7 +283,7 @@ function vLevels(){
    <h2 class="fred" style="color:var(--g7);margin:26px 0 4px">🗺️ Levels <span class="ar" style="font-size:15px;color:var(--mut)">· المستويات</span></h2>
    <div class="lgrid">${LEVELS.map((l,i)=>{const st=isAdmin()?{on:true}:lvState(PROFILE,l.id);const on=st.on;
      const badge=on?(l.ready?`<span class="lb ok">✅ مفتوح</span>`:`<span class="lb soon">⏳ قريبًا</span>`):(st.expired?`<span class="lb lock">⌛ الاشتراك خلص · جدّد</span>`:`<span class="lb lock">🔒 ادفع اشتراكك</span>`);
-     return `<a class="lcard ${on?'on':'off'} lc${i}" href="#level-${l.id}"><div class="lic">${l.ic}</div><div class="lcode">${l.code}</div><div class="len">${l.en}</div><div class="lar ar">${l.ar}</div>${badge}${on&&st.until?`<div class="lexp">لحد ${fmtD(st.until)}</div>`:''}${l.id==='preA1'&&on?`<div class="bar"><i data-prog="all" style="width:0"></i></div>`:''}</a>`;}).join('')}</div>
+     return `<a class="lcard ${on?'on':'off'} f-${l.fam}" href="#level-${l.id}"><img class="lav" src="${l.ch}" alt="${l.chn}"><span class="lchn">${l.chn}</span><div class="lcode">${l.code}</div><div class="len">${l.en}</div><div class="lar ar">${l.ar}</div>${badge}${on&&st.until?`<div class="lexp">لحد ${fmtD(st.until)}</div>`:''}${l.id==='preA1'&&on?`<div class="bar"><i data-prog="all" style="width:0"></i></div>`:''}</a>`;}).join('')}</div>
    <div class="bigcards">
     ${PROFILE.status==='approved'||isAdmin()?`<div class="bc bc-game"><h3>🏆 Champions</h3><p class="ar">أبطال التحديات — مين جايب أعلى سكور.</p><a class="btn b-lime" href="#champions">شوف الأبطال</a><div class="em">🎮</div></div>`:''}
     <div class="bc bc-me"><h3>💬 Subscribe · اشترك</h3><p class="ar">عايز تفتح ليفل جديد؟ كلّم الأدمن على الواتساب وابعت سكرين الدفع.</p><button class="btn b-lime" onclick="subscribe('${(LEVELS.find(l=>!hasLevel(l.id))||LEVELS[0]).id}')">كلّم الأدمن</button><div class="em">📲</div></div>
