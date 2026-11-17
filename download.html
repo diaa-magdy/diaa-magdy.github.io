@@ -1,59 +1,100 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lingo Planet · تحميل التطبيق</title><meta name="theme-color" content="#0C6115"><link rel="icon" href="img/favicon.png">
+<title>Lingo Planet · نزّل التطبيق</title><meta name="theme-color" content="#0C6115"><link rel="icon" href="img/favicon.png">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="img/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Lingo Planet">
+<meta property="og:title" content="Lingo Planet · Mr. Diaa Magdy"><meta property="og:description" content="نزّل تطبيق كورس الإنجليزي التفاعلي — مجاني وفي ثواني"><meta property="og:image" content="https://diaa-magdy.github.io/img/icon-512.png">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
 <style>
+*{box-sizing:border-box}
 body{margin:0;font-family:Cairo,sans-serif;background:radial-gradient(circle at 20% 0,#d8f39a,transparent 45%),#f4f9ef;color:#0A2116;min-height:100vh}
-.w{max-width:520px;margin:0 auto;padding:26px 18px 40px;text-align:center}
-.ic{width:116px;border-radius:30px;box-shadow:0 12px 30px rgba(12,97,21,.3)}
-h1{font-family:Fredoka;color:#0C6115;font-size:34px;margin:12px 0 0;direction:ltr}
-.s{color:#5d7366;font-weight:700}
-.btn{display:block;width:100%;border:0;cursor:pointer;font-family:inherit;margin:22px 0 8px;background:#0C6115;color:#fff;text-decoration:none;font-weight:900;font-size:22px;border-radius:20px;padding:18px;box-shadow:0 6px 0 #063d0c}
-.btn small{display:block;font-size:13px;font-weight:700;opacity:.85}
-.btn2{display:block;background:#fff;color:#0C6115;border:2px solid #d7ecc4;text-decoration:none;font-weight:800;border-radius:16px;padding:12px;margin-top:10px}
-.card{background:#fff;border-radius:22px;padding:16px 18px;margin-top:18px;text-align:right;box-shadow:0 6px 20px rgba(10,33,22,.07)}
-.card li{margin:8px 0;font-weight:700}.k{background:#eaf6df;color:#0C6115;padding:1px 8px;border-radius:8px}
-.ok{display:none;background:#eaf6df;color:#0C6115;font-weight:900;border-radius:16px;padding:14px;margin-top:18px}
-.hide{display:none}
-details{margin-top:18px;text-align:right}summary{cursor:pointer;font-weight:800;color:#5d7366}
-.ch{width:140px;margin-top:18px}
+.w{max-width:480px;margin:0 auto;padding:22px 18px 40px;text-align:center}
+.ic{width:104px;border-radius:28px;box-shadow:0 12px 30px rgba(12,97,21,.3)}
+h1{font-family:Fredoka;color:#0C6115;font-size:32px;margin:10px 0 0;direction:ltr}
+.s{color:#5d7366;font-weight:700;margin-top:2px}
+.btn{display:flex;align-items:center;gap:14px;width:100%;border:0;cursor:pointer;font-family:inherit;text-decoration:none;text-align:right;border-radius:22px;padding:16px 18px;margin-top:16px}
+.btn .e{font-size:34px;line-height:1}
+.btn b{display:block;font-size:22px;font-weight:900}
+.btn small{display:block;font-size:14px;font-weight:700;opacity:.8}
+.b1{background:#fff;color:#0C6115;border:3px solid #cfe8b8}
+.b2{background:#0C6115;color:#fff;box-shadow:0 6px 0 #063d0c}
+.b2:active{transform:translateY(3px);box-shadow:0 3px 0 #063d0c}
+.or{color:#8aa093;font-weight:800;margin-top:14px;font-size:14px}
+.warn{display:none;background:#fff6d6;border:3px dashed #f0b400;border-radius:20px;padding:14px;margin-top:16px;font-weight:800;color:#5a4300}
+.warn a{display:block;margin-top:10px;background:#0C6115;color:#fff;text-decoration:none;border-radius:16px;padding:12px;font-weight:900}
+.ok{display:none;background:#eaf6df;border:2px solid #b9e08f;color:#0C6115;font-weight:900;border-radius:18px;padding:14px;margin-top:16px}
+.vid{background:#fff;border-radius:24px;padding:14px;margin-top:26px;box-shadow:0 6px 20px rgba(10,33,22,.08)}
+.vid h2{margin:2px 0 10px;font-size:20px;color:#0C6115}
+.vid video{width:100%;max-width:300px;border-radius:18px;background:#000;display:block;margin:0 auto}
+.more{margin-top:22px;text-align:right}.more summary{cursor:pointer;font-weight:800;color:#5d7366;text-align:center}
+.more .c{background:#fff;border-radius:18px;padding:12px 16px;margin-top:10px;font-weight:700;font-size:15px}
+.k{background:#eaf6df;color:#0C6115;padding:1px 8px;border-radius:8px;white-space:nowrap}
+/* steps modal */
+.m{position:fixed;inset:0;background:rgba(10,33,22,.55);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.m.on{display:flex}
+.mb{background:#fff;width:100%;max-width:480px;border-radius:28px 28px 0 0;padding:22px 20px 28px;text-align:right;animation:up .3s ease}
+@keyframes up{from{transform:translateY(100%)}}
+.mb h3{margin:0 0 6px;color:#0C6115;font-size:22px;text-align:center}
+.st{display:flex;gap:12px;align-items:center;background:#f4f9ef;border-radius:16px;padding:12px;margin-top:10px;font-weight:800;font-size:17px}
+.st i{font-style:normal;background:#0C6115;color:#fff;min-width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900}
+.st .ico{font-size:24px;margin-right:auto}
+.x{display:block;width:100%;margin-top:16px;border:0;border-radius:16px;padding:13px;font-family:inherit;font-weight:900;font-size:17px;background:#eaf6df;color:#0C6115}
+.ch{width:120px;margin-top:22px}
 </style></head><body><div class="w">
 <img class="ic" src="img/icon-512.png" alt="Lingo Planet">
-<h1>Lingo Planet</h1><div class="s">Pre A1 · Mr. Diaa Magdy — كورس إنجليزي تفاعلي</div>
+<h1>Lingo Planet</h1><div class="s">كورس الإنجليزي التفاعلي · Mr. Diaa Magdy</div>
 
-<button class="btn" id="inst">📲 ثبّت التطبيق على موبايلك<small>مجاني · آمن · من غير ملفات</small></button>
-<div class="ok" id="done">✅ تم! هتلاقي أيقونة تشاتي على الشاشة الرئيسية</div>
+<div class="warn" id="inapp">⚠️ إنت فاتح اللينك من جوه تطبيق (واتساب / فيسبوك…).<br>عشان تنزّل التطبيق، افتحه من <span id="brw">Chrome</span> الأول 👇
+<a id="openCh" href="#">🌐 افتح في <span id="brw2">Chrome</span></a></div>
 
-<div class="card" id="andr"><b>📱 أندرويد (كروم):</b><ol>
-<li>اضغط الزرار الأخضر <b>"ثبّت التطبيق"</b> ← <b class="k">تثبيت</b>.</li>
-<li>لو ما ظهرتش رسالة: افتح قائمة كروم <b>⋮</b> فوق ← <b class="k">تثبيت التطبيق</b> أو <b class="k">إضافة إلى الشاشة الرئيسية</b>.</li>
-<li>افتح أيقونة تشاتي، سجّل بالجيميل، واستنى موافقة المستر 👍</li></ol></div>
+<a class="btn b1" href="index.html"><span class="e">🌐</span><span><b>افتحه كموقع</b><small>يفتح على طول من المتصفح — من غير تنزيل</small></span></a>
+<div class="or">— أو —</div>
+<button class="btn b2" id="inst"><span class="e">📲</span><span><b>نزّله كتطبيق</b><small>أيقونة على موبايلك · مجاني وآمن · في ثواني</small></span></button>
+<div class="ok" id="done">✅ تم التنزيل! هتلاقي أيقونة <b>Lingo Planet</b> على الشاشة الرئيسية — افتحها وسجّل بالجيميل.</div>
+<div class="ok" id="already">✅ التطبيق متنزّل عندك بالفعل! <a href="index.html" style="color:#0C6115">افتحه من هنا</a></div>
 
-<div class="card hide" id="ios"><b>🍏 آيفون (سفاري):</b><ol>
-<li>افتح اللينك ده من <b>Safari</b>.</li>
-<li>اضغط زرار المشاركة <b>⬆️</b> تحت.</li>
-<li>اختار <b class="k">إضافة إلى الشاشة الرئيسية</b> ← <b class="k">إضافة</b>.</li></ol></div>
+<div class="vid"><h2>🎬 مش عارف تنزّله؟ شوف الفيديو ده</h2>
+<video src="video/howto.mp4" poster="img/howto.jpg" controls playsinline preload="none"></video></div>
 
-<a class="btn2" href="index.html">🌐 أو افتح الكورس من المتصفح مباشرة</a>
-
-<details><summary>⬇️ تحميل ملف APK (طريقة بديلة لأندرويد)</summary>
-<div class="card"><a class="btn2" href="LingoPlanet.apk" download>تحميل LingoPlanet.apk</a><ol>
-<li>افتح الملف بعد التحميل واضغط <b>تثبيت</b>.</li>
-<li>لو ظهرت رسالة <b>"تم الحظر بواسطة Play Protect"</b>: اضغط <b class="k">مزيد من التفاصيل</b> ← <b class="k">التثبيت على أي حال</b>.<br><small>الرسالة دي بتظهر لأي تطبيق مش من جوجل بلاي، والتطبيق آمن.</small></li></ol></div></details>
+<details class="more"><summary>عندك مشكلة؟ حلول تانية ⬇️</summary>
+<div class="c">📱 <b>أندرويد:</b> افتح اللينك من <b>Chrome</b> ← قائمة <b>⋮</b> فوق ← <span class="k">تثبيت التطبيق</span> أو <span class="k">إضافة إلى الشاشة الرئيسية</span>.</div>
+<div class="c">🍏 <b>آيفون:</b> افتح اللينك من <b>Safari</b> ← زرار المشاركة <b>⬆️</b> ← <span class="k">إضافة إلى الشاشة الرئيسية</span> ← <span class="k">إضافة</span>.</div>
+<div class="c">📦 <b>ملف APK (أندرويد فقط):</b> <a href="LingoPlanet.apk" download style="color:#0C6115;font-weight:900">تحميل الملف</a> — لو ظهرت رسالة Play Protect اضغط <span class="k">مزيد من التفاصيل</span> ← <span class="k">التثبيت على أي حال</span>.</div>
+</details>
 <img class="ch" src="img/chatty.png" alt="Chatty">
 </div>
+
+<div class="m" id="m"><div class="mb" id="mb"></div></div>
 <script>
-const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-if(isIOS){document.getElementById('ios').classList.remove('hide');document.getElementById('andr').classList.add('hide');}
-let dp=null;const b=document.getElementById('inst');
+const ua=navigator.userAgent, $=id=>document.getElementById(id);
+const isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isAndroid=/android/i.test(ua);
+const inApp=/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Snapchat|TikTok|musical_ly|Telegram|MicroMessenger|; wv\)/i.test(ua);
+const isSafari=isIOS&&/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+if(standalone){$('already').style.display='block';$('inst').style.display='none';}
+if(inApp||(isIOS&&!isSafari)){
+  $('inapp').style.display='block';
+  if(isIOS){$('brw').textContent=$('brw2').textContent='Safari';
+    $('openCh').onclick=e=>{e.preventDefault();steps('افتحه في Safari',[['اضغط على النقط ⋯ أو زرار المشاركة','⋯'],['اختار «فتح في Safari» / Open in Safari','🧭'],['وبعدين اضغط «نزّله كتطبيق»','📲']]);};}
+  else $('openCh').href='intent://diaa-magdy.github.io/download.html#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(location.href)+';end';
+}
+let dp=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;});
-b.onclick=async()=>{
-  if(dp){dp.prompt();const r=await dp.userChoice;dp=null;if(r.outcome==='accepted')document.getElementById('done').style.display='block';return;}
-  if(isIOS){alert('اضغط زرار المشاركة ⬆️ في سفاري، ثم "إضافة إلى الشاشة الرئيسية"');return;}
-  alert('افتح قائمة كروم ⋮ فوق، واختار "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية"');
+addEventListener('appinstalled',()=>{$('done').style.display='block';$('m').classList.remove('on');});
+function steps(title,list){
+  $('mb').innerHTML='<h3>'+title+'</h3>'+list.map((s,i)=>'<div class="st"><i>'+(i+1)+'</i><span>'+s[0]+'</span><span class="ico">'+s[1]+'</span></div>').join('')+'<button class="x" onclick="document.getElementById(\'m\').classList.remove(\'on\')">تمام 👍</button>';
+  $('m').classList.add('on');
+}
+$('m').onclick=e=>{if(e.target.id==='m')$('m').classList.remove('on');};
+$('inst').onclick=async()=>{
+  if(!dp&&!isIOS){for(let i=0;i<10&&!dp;i++)await new Promise(r=>setTimeout(r,200));}
+  if(dp){dp.prompt();const r=await dp.userChoice;dp=null;if(r.outcome==='accepted')$('done').style.display='block';return;}
+  if(isIOS){
+    if(!isSafari){$('openCh').click();return;}
+    steps('نزّله على الآيفون 🍏',[['اضغط زرار المشاركة تحت','⬆️'],['انزل واختار «إضافة إلى الشاشة الرئيسية»','➕'],['اضغط «إضافة» فوق — وخلاص!','✔️']]);return;}
+  if(inApp&&isAndroid){location.href=$('openCh').href;return;}
+  steps('نزّله من قائمة المتصفح 📱',[['اضغط على النقط ⋮ فوق في Chrome','⋮'],['اختار «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»','📲'],['اضغط «تثبيت» — وهتلاقي الأيقونة على الشاشة','✅']]);
 };
-addEventListener('appinstalled',()=>document.getElementById('done').style.display='block');
 try{navigator.serviceWorker.register('sw.js');}catch(e){}
 </script></body></html>
