@@ -578,3 +578,10 @@ textarea.essay{width:100%;min-height:180px;border:2px solid var(--line);border-r
 .ytbox img,.ytbox iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0}
 .ytbox .ytplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;border:0;background:var(--lime);color:var(--g9);font-size:30px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
 .ytbox .ytsrc{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:12px;border-radius:99px;padding:3px 10px}
+
+.ywords{background:#fff;border:2px solid var(--line);border-radius:18px;padding:12px;margin:10px 0}
+.ywords>div{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ywc{border:0;background:var(--mint2);color:var(--g7);font-weight:800;border-radius:99px;padding:6px 12px}
+.yscript{background:#fff;border:2px solid var(--line);border-radius:18px;padding:10px 14px;margin:10px 0}
+.yscript summary{cursor:pointer;font-weight:900;color:var(--g7)}
+.ysl{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}.ysl .en{font-weight:700}.ysl .ar{font-size:14px;color:var(--mut)}

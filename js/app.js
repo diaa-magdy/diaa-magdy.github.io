@@ -188,7 +188,7 @@ const hasLevel=id=>isAdmin()||lvState(PROFILE,id).on;
 const fmtD=t=>new Date(t).toLocaleDateString('en-GB');
 
 /* ================= PROGRESS ================= */
-function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq');if(u.sounds)a.push('sq');if(u.idioms)a.push('iq');if(u.challenge)a.push('ch');a.push('game','test');return a;}
+function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq');if(u.sounds)a.push('sq');if(u.idioms)a.push('iq');if(u.challenge)a.push('ch');if((u.watch||[]).some(w=>w.quiz))a.push('yw');a.push('game','test');return a;}
 function prog(n){const k=KP()+'u'+n;PROFILE.prog=PROFILE.prog||{};PROFILE.prog[k]=PROFILE.prog[k]||{};return PROFILE.prog[k];}
 function done(n,a){if(!PROFILE)return;const p=prog(n);if(!p[a]){p[a]=1;API.saveProg();updateProg(n);}}
 function pctOf(prof,n){const p=(prof.prog||{})[KP()+'u'+n]||{};const A=unitActs(n);return Math.round(A.filter(a=>p[a]).length/A.length*100);}
@@ -480,7 +480,10 @@ function vUnit(n){
       <div class="trans-l" id="tr-${v.id}">${v.lines.map((L,i)=>lineHTML(v,L,i)).join('')}</div></div>`;
       H+=makeEx(v.id+'q','?',{type:'mcq',title:'Did you understand?',ar:'هل فهمت الفيديو؟',items:v.quiz},v.id+'q');
       if(v.fill) H+=makeEx(v.id+'f','✎',fillFrom(v),v.id+'f');});
-    (u.watch||[]).forEach(w=>{H+=`<div class="sub">📺 ${esc(w.title)} <small>${w.ar}</small></div><div class="ytbox" data-yt="${w.yt}"><img src="https://i.ytimg.com/vi/${w.yt}/hqdefault.jpg" alt="" loading="lazy"><button class="ytplay" aria-label="Play">▶</button><span class="ytsrc">YouTube · ${esc(w.by||'')}</span></div>`;});
+    (u.watch||[]).forEach(w=>{H+=`<div class="sub">📺 ${esc(w.title)} <small>${w.ar}</small></div><div class="ytbox" data-yt="${w.yt}"><img src="https://i.ytimg.com/vi/${w.yt}/hqdefault.jpg" alt="" loading="lazy"><button class="ytplay" aria-label="Play">▶</button><span class="ytsrc">YouTube · ${esc(w.by||'')}</span></div>`;
+      if(w.words)H+=`<div class="ywords"><b>🔑 Words in the video · كلمات الفيديو</b><div>${w.words.map(x=>`<button class="ywc" data-say="${esc(x)}">🔊 ${T(x)}</button>`).join('')}</div></div>`;
+      if(w.lines)H+=`<details class="yscript"><summary>📜 Video script · نص الفيديو بالترجمة</summary>${w.lines.map(l=>`<div class="ysl"><button class="mini" data-say="${esc(l[0])}">🔊</button><div><div class="en">${T(l[0])}</div><div class="ar">${l[1]}</div></div></div>`).join('')}</details>`;
+      if(w.quiz)H+=makeEx('yw'+w.yt,'❓',{type:'mcq',title:'Video questions',ar:'أسئلة على فيديو اليوتيوب',items:w.quiz},'yw');});
     H+=`</section>`;}
   /* vocab */
   H+=`<section class="sec" id="s-vocab">${secH('📚','Vocabulary','الكلمات الجديدة — اضغط على الصورة تسمع الكلمة والجملة','voc')}<div class="vtabs" id="vtabs">${u.vocab.map((g,i)=>`<button class="${i?'':'on'}" data-vt="${i}">${g.t} · <span class="ar">${g.ar}</span></button>`).join('')}</div><div id="vgrid"></div></section>`;
@@ -780,6 +783,7 @@ function collectSpeech(){
     if(u.sounds){u.sounds.groups.forEach(g=>g.forEach&&g[4].forEach(x=>add(x[1])));u.sounds.quiz.items.forEach(i=>add(i[1]));words(u.sounds.tip[0]);}
     if(u.idioms){u.idioms.items.forEach(x=>{both(x[0]);both(x[1]);both(x[3]);});u.idioms.quiz.forEach(q=>{both(plain(q.q));q.o.forEach(words);});}
     if(u.challenge)u.challenge.qs.forEach(both);
+    (u.watch||[]).forEach(w=>{(w.words||[]).forEach(both);(w.lines||[]).forEach(l=>both(l[0]));(w.quiz||[]).forEach(q=>{both(plain(q.q));q.o.forEach(words);});});
     u.games.pairs.forEach(p=>add(p[1]));u.games.spell.forEach(p=>add(p[1]));u.games.speed.forEach(p=>words(p[0]));
     [u.test].forEach(T0=>T0.sections.forEach(s=>{if(s.passage){add(s.passage.join(' '));s.passage.forEach(words);}(s.qs||[]).forEach(q=>{if(s.listen)add(q.audio,VOICE[q.g]);else{add(q.say||q.q);words(q.q);}q.o.forEach(words);});if(s.writing)words(s.prompt);}));
   });cu=SPR(8);[FINAL].forEach(T0=>T0.sections.forEach(s=>{if(s.passage){add(s.passage.join(' '));s.passage.forEach(words);}(s.qs||[]).forEach(q=>{if(s.listen)add(q.audio,VOICE[q.g]);else{add(q.say||q.q);words(q.q);}q.o.forEach(words);});if(s.writing)words(s.prompt);}));
