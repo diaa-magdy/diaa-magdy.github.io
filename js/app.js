@@ -364,8 +364,8 @@ function vHome(){
    <section class="hero"><div class="tx"><span class="lv">${LV(LVL).code} · ${PK().sub}</span><h1>Hi, <span>${esc(first)}</span>! 👋</h1>
      <p class="ar">${PK().home}</p>
      <div class="stats3"><div class="stat"><b data-progt="all">0%</b><small>Level progress</small></div><div class="stat"><b>${done7} / ${UNIT_LIST.length}</b><small>Tests passed</small></div><div class="stat"><b>${fin?fin.best+'%':'—'}</b><small>Final exam</small></div></div></div>
-    <div class="bubble">Hi! I'm <b>Chatty</b> 🦜<br>Let's learn English together!</div>
-    <img class="ch" src="${PK().ch}" alt="Chatty" data-say="Hi! I'm Chatty. Let's learn English together!"></section>
+    <div class="bubble">Hi! I'm <b>${LV(LVL).chn}</b> 🦜<br>Let's learn English together!</div>
+    <img class="ch" src="${PK().ch}" alt="${LV(LVL).chn}" data-say="Hi! I'm ${LV(LVL).chn}. Let's learn English together!"></section>
    <h2 class="fred" style="color:var(--g7);margin:26px 0 4px">📚 Your units <span class="ar" style="font-size:15px;color:var(--mut)">· الوحدات</span></h2>
    <div class="ugrid">${UNIT_LIST.map(n=>{const u=UNITS[n],op=unlocked(n),p=pct(n),t=testBest(n);
      return `<${op?'a':'div'} class="ucard ${op?'open':'lock'}" ${op?`href="${H('unit-'+n)}"`:`onclick="toast('🔒 انجح في اختبار الوحدة ${n-1} الأول')"`}>
@@ -433,7 +433,7 @@ let AC=null;function sfx(ok){try{AC=AC||new (window.AudioContext||window.webkitA
 
 /* ================= SECTION BUILDERS ================= */
 function secH(ic,title,ar,acts){return `<div class="sec-h"><div class="ic">${ic}</div><div><h2>${title}</h2><div class="ar">${ar}</div></div>${acts?`<span class="done" data-act="${acts}">⬜</span>`:''}</div>`;}
-function tip(en,ar){return `<div class="tip"><img src="img/chatty.png" alt=""><div><b>Chatty's tip:</b> ${T(en)}<div class="ar">${ar}</div></div></div>`;}
+function tip(en,ar){return `<div class="tip"><img src="${PK().ch}" alt=""><div><b>${LV(LVL).chn}'s tip:</b> ${T(en)}<div class="ar">${ar}</div></div></div>`;}
 let SECMODE='all';
 function jump(id){
   SECMODE=id; stopAll(); $$('video').forEach(v=>v.pause());
@@ -470,7 +470,7 @@ function vUnit(n){
   let H=topBar(true)+`<main class="wrapc">
    <section class="uhero" style="background-image:linear-gradient(110deg,rgba(10,33,22,.92),rgba(12,97,21,.85) 45%,rgba(29,148,13,.55)),url(${u.cover})"><div class="tx"><span class="k">UNIT ${n} · ${LV(LVL).code}</span><h1>${u.title} ${u.icon}</h1>
     <div class="ar" style="margin-top:8px;font-weight:700;color:#e4f6d6">${u.intro}</div><div class="uprog"><div class="bar"><i data-prog="${n}"></i></div><b data-progt="${n}">0%</b></div></div>
-    <img class="ch" src="img/chatty.png" alt="" data-say="Welcome to unit ${n}! Tap any word to hear it."></section>
+    <img class="ch" src="${PK().ch}" alt="" data-say="Welcome to unit ${n}! Tap any word to hear it."></section>
    <nav class="secnav" id="secnav"><button class="on" data-jump="all">📚 All · الكل</button>${NAV.map(x=>`<button data-jump="${x[0]}">${x[1]}</button>`).join('')}</nav>
    <div class="tip-top">${tip('Tap any English word to hear it and see the meaning!','👆 اضغط على أي كلمة إنجليزية في الصفحة كلها عشان تسمع نطقها وتشوف معناها.')}</div>`;
   /* videos */
@@ -574,7 +574,7 @@ async function renderBoard(game){const el=$('#lbody');if(!el)return;const L2=(aw
 async function renderBests(){for(const g of ['memory','spell','speed']){const el=$('#best-'+g);if(!el)continue;const t=(await topOf(gkey(g)))[0];el.innerHTML=t?`👑 ${esc(t.name)} · ${t.score}`:'👑 No champion yet';}}
 async function endGame(game,score,msg){
   await addScoreLB(game,score);const rank=(await topOf(gkey(game))).findIndex(x=>x.uid===USER.uid)+1;
-  $('#mbody').innerHTML=`<div style="text-align:center"><img src="img/chatty.png" style="width:120px;margin:0 auto" alt=""><h2 class="fred" style="color:var(--g7);margin:6px 0">${msg}</h2><div class="fred" style="font-size:56px;color:var(--g5);line-height:1">${score}</div><div style="font-weight:800;color:var(--mut)">points · ترتيبك #${rank||'—'}</div>
+  $('#mbody').innerHTML=`<div style="text-align:center"><img src="${PK().ch}" style="width:120px;margin:0 auto" alt=""><h2 class="fred" style="color:var(--g7);margin:6px 0">${msg}</h2><div class="fred" style="font-size:56px;color:var(--g5);line-height:1">${score}</div><div style="font-weight:800;color:var(--mut)">points · ترتيبك #${rank||'—'}</div>
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn b-g" onclick="closeModal();${game==='memory'?'gMemory':game==='spell'?'gSpell':'gSpeed'}()">↻ Play again</button><button class="btn b-soft" onclick="closeModal();jump('games')">🏆 Leaderboard</button></div></div>`;
   speakNow(score>0?'Great job!':'Try again!');
 }
@@ -619,7 +619,7 @@ function testStart(n){const T0=UNITS[n].test;const tb=testBest(n);
   $('#testArea').innerHTML=`<div class="test-start"><h2 class="fred" style="margin:0;font-size:28px">Ready for the Unit ${n} test? 🎯</h2>
    <div class="ar" style="color:#d6f0c6;font-weight:700;margin-top:4px">الاختبار فيه ٥ أجزاء والنتيجة بتظهر في الآخر. لازم ${T0.pass}% عشان تنجح وتفتح الوحدة اللي بعدها، وتقدر تنزّل النتيجة PDF وتبعتها للمستر.</div>
    <ul>${T0.sections.map(s=>`<li>${s.icon} ${s.title}</li>`).join('')}</ul>${tb!==null?`<div style="font-weight:900;margin-bottom:10px">🏅 Best score: ${tb}%</div>`:''}
-   <button class="btn b-lime" style="font-size:17px" onclick="testRender('#testArea',UNITS[${n}].test,'u${n}','Unit ${n} · ${esc(UNITS[n].title)}')">▶ Start the test</button><img class="ch" src="img/chatty.png" alt=""></div>`;}
+   <button class="btn b-lime" style="font-size:17px" onclick="testRender('#testArea',UNITS[${n}].test,'u${n}','Unit ${n} · ${esc(UNITS[n].title)}')">▶ Start the test</button><img class="ch" src="${PK().ch}" alt=""></div>`;}
 function testRender(sel,T0,key,label){
   TA={};TST={T0,key,label,sel};let q=0;
   $(sel).innerHTML=T0.sections.map(s=>`<div class="tsec"><div class="tsec-h"><span class="e">${s.icon}</span><div><b>${s.title}</b> <span class="ar" style="color:var(--mut)">· ${s.ar}</span></div></div><div class="tsec-b">
@@ -650,7 +650,7 @@ function testSubmit(){
   $$('.opt[data-t]').forEach(b=>{const [sid,i]=b.dataset.t.split('-');const it=T0.sections.find(s=>s.id===sid).qs[+i];b.disabled=true;if(+b.dataset.k===it.a)b.classList.add(b.classList.contains('pick')?'ok':'show');else if(b.classList.contains('pick'))b.classList.add('bad');});
   $('#essay').disabled=true;
   const nextU=/u\d+$/.test(key)?+key.match(/u(\d+)$/)[1]+1:0;
-  $('#testRes').innerHTML=`<div class="result"><div class="res-top"><img class="ch" src="img/chatty.png" alt=""><div class="pc">${pc}%</div><div class="st">${stars}</div>
+  $('#testRes').innerHTML=`<div class="result"><div class="res-top"><img class="ch" src="${PK().ch}" alt=""><div class="pc">${pc}%</div><div class="st">${stars}</div>
     <div class="pass ${pass?'y':'n'}">${pass?'✅ PASSED · ناجح':'❌ Try again · حاول تاني'}</div><div class="ar" style="margin-top:8px;color:#d6f0c6;font-weight:700">${pass?(key==='final'?'مبروك! شهادتك جاهزة 🎓':'برافو! كده فتحت الوحدة اللي بعدها 🎉'):'راجع الأجزاء اللي غلطت فيها وجرّب تاني 💪'}</div></div>
    <div class="res-b">${secs.map(x=>`<div class="rrow"><span class="e">${x.s.icon}</span><b>${x.s.title} <span class="ar" style="color:var(--mut);font-weight:600">· ${x.s.ar}</span></b><div class="bar"><i style="width:${x.got/x.tot*100}%"></i></div><span class="s">${x.got}/${x.tot}</span></div>`).join('')}
     ${essayFeedbackHTML(Wg.g,essay)}
@@ -741,12 +741,12 @@ function vFinal(){
   app.innerHTML=topBar(true)+`<main class="wrapc"><div class="sec"><div class="sec-h"><div class="ic">🎯</div><div><h2>Final Level Exam · ${LV(LVL).code}</h2><div class="ar">الاختبار النهائي الشامل — Listening · Vocabulary · Grammar · Reading · Writing</div></div></div>
    <div class="test-start"><h2 class="fred" style="margin:0;font-size:26px">Are you ready? 🎓</h2><div class="ar" style="color:#d6f0c6;font-weight:700;margin-top:4px">لو جبت ${FINAL.pass}% أو أكتر هتطلعلك شهادة اجتياز المستوى PDF باسمك.</div>
     <ul>${FINAL.sections.map(s=>`<li>${s.icon} ${s.title}</li>`).join('')}</ul>${getFinal()?`<div style="font-weight:900;margin-bottom:10px">🏅 Best: ${getFinal().best}%</div>`:''}
-    <button class="btn b-lime" style="font-size:17px" onclick="testRender('#finalArea',FINAL,'final','Final Level Exam')">▶ Start</button><img class="ch" src="img/chatty.png" alt=""></div><div id="finalArea"></div></div></main>`;
+    <button class="btn b-lime" style="font-size:17px" onclick="testRender('#finalArea',FINAL,'final','Final Level Exam')">▶ Start</button><img class="ch" src="${PK().ch}" alt=""></div><div id="finalArea"></div></div></main>`;
 }
 
 /* ================= CERTIFICATE ================= */
 function certHTML(name,score,date,id){
-  return `<div class="cert" id="certEl"><div class="c1"></div><div class="c2"></div><div class="frame"></div><div class="frame2"></div><img class="chat" src="img/chatty.png" alt="">
+  return `<div class="cert" id="certEl"><div class="c1"></div><div class="c2"></div><div class="frame"></div><div class="frame2"></div><img class="chat" src="${PK().ch}" alt="">
    <div class="in"><div class="lg"><img src="img/icon-192.png" style="border-radius:18px" alt=""><div><b>LINGO PLANET</b><small>DIAA MAGDY · ENGLISH COURSES</small></div></div>
     <h1>CERTIFICATE</h1><div class="of">OF ACHIEVEMENT</div><div class="pr">This certificate is proudly presented to</div><div class="nm">${esc(name)}</div>
     <div class="tx">for successfully completing <b>${PK().cert}</b> and passing the final level exam in Listening, Vocabulary, Grammar, Reading and Writing with a score of <b>${score}</b>.</div>
@@ -771,6 +771,7 @@ function collectSpeech(){
   const both=s=>{add(s);words(s);};
   if(LVL==='preA1')for(let i=1;i<=100;i++){add(nWord(i));}
   ["Hi! I'm Chatty. Let's learn English together!",'Great job!','Try again!','Congratulations! You passed!','Good try! Practice and try again.','Congratulations! You did it!','blank'].forEach(add);
+  if(LV(LVL).chn!=='Chatty'){cu=SPR(1);add(`Hi! I'm ${LV(LVL).chn}. Let's learn English together!`);cu=0;}
   UNIT_LIST.forEach(n=>{cu=SPR(n);const u=UNITS[n];add(`Welcome to unit ${n}! Tap any word to hear it.`);
     u.videos.forEach(v=>{v.lines.forEach(L=>{add(L[1],VOICE[v.sp[L[0]].g]);words(L[1]);});v.quiz.forEach(q=>{both(q.q);q.o.forEach(words);});});
     u.vocab.forEach(g=>g.items.forEach(([e,w,s])=>{add(w);both(s);}));
