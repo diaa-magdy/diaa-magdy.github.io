@@ -19,6 +19,16 @@ const LV=id=>LEVELS.find(l=>l.id===id);
 /* ---- level packs: Pre A1 is the built-in UNITS/FINAL; other levels register in window.LEVEL_PACKS ---- */
 const PACKS=Object.assign({preA1:{units:Object.assign({},UNITS),final:Object.assign({},FINAL),cert:'Pre A1 – Beginner Level',home:'مستوى التأسيس — بداية قوية للكلام الحقيقي بالإنجليزي.',sub:'Beginner Level',spr:0,ch:'img/chatty.png'}},window.LEVEL_PACKS||{});
 Object.keys(PACKS).forEach(id=>{const l=LV(id);if(l&&id!=='preA1')l.ready=true;});
+/* mix the answer positions (same order every time) so the right answer isn't always in the same place */
+(function(){const seen=new Set();const hs=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
+  const mix=x=>{if(!x||typeof x!=='object'||seen.has(x))return;seen.add(x);
+    if(Array.isArray(x)){x.forEach(mix);return;}
+    if(Array.isArray(x.o)&&Number.isInteger(x.a)&&x.a<x.o.length&&x.o.length>1&&x.o.every(o=>typeof o==='string')){
+      let r=hs(String(x.q||x.audio||'')+'|'+x.o.join('|'));const rnd=()=>{r=Math.imul(r^(r>>>15),2246822507)>>>0;r^=r>>>13;return (r>>>0)/4294967296;};
+      const right=x.o[x.a];const o=x.o.slice();for(let i=o.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[o[i],o[j]]=[o[j],o[i]];}
+      x.o=o;x.a=o.indexOf(right);}
+    Object.keys(x).forEach(k=>mix(x[k]));};
+  mix(PACKS);})();
 let LVL='preA1';
 function useLevel(id){if(!PACKS[id]||id===LVL)return;LVL=id;const P=PACKS[id];
   Object.keys(UNITS).forEach(k=>delete UNITS[k]);Object.assign(UNITS,P.units);
