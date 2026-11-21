@@ -198,7 +198,7 @@ const hasLevel=id=>isAdmin()||lvState(PROFILE,id).on;
 const fmtD=t=>new Date(t).toLocaleDateString('en-GB');
 
 /* ================= PROGRESS ================= */
-function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq');if(u.sounds)a.push('sq');if(u.idioms)a.push('iq');if(u.challenge)a.push('ch');if((u.watch||[]).some(w=>w.quiz))a.push('yw');a.push('game','test');return a;}
+function unitActs(n){const u=UNITS[n];const a=[];u.videos.forEach(v=>a.push(v.id,v.id+'q',v.id+'f'));a.push('voc','talk','gram');u.exercises.forEach((x,i)=>a.push('ex'+i));if(u.numbers)a.push('num');a.push('rq');if(u.sounds)a.push('sq');if(u.idioms)a.push('iq');if(u.phrasal)a.push('pq');if(u.slang)a.push('sl');if(u.story)a.push('st');if(u.challenge)a.push('ch');if((u.watch||[]).some(w=>w.quiz))a.push('yw');a.push('game','test');return a;}
 function prog(n){const k=KP()+'u'+n;PROFILE.prog=PROFILE.prog||{};PROFILE.prog[k]=PROFILE.prog[k]||{};return PROFILE.prog[k];}
 function done(n,a){if(!PROFILE)return;const p=prog(n);if(!p[a]){p[a]=1;API.saveProg();updateProg(n);}}
 function pctOf(prof,n){const p=(prof.prog||{})[KP()+'u'+n]||{};const A=unitActs(n);return Math.round(A.filter(a=>p[a]).length/A.length*100);}
@@ -476,7 +476,7 @@ let vocabSeenSet=new Set();
 function vocabSeen(w){vocabSeenSet.add(w);if(vocabSeenSet.size>=6)done(CUR,'voc');}
 function vUnit(n){
   CUR=n;loadSprite(SPR(n));const u=UNITS[n];Object.keys(S).forEach(k=>delete S[k]);vocabSeenSet=new Set();
-  const NAV=[u.videos.length&&['videos','🎬 Videos'],['vocab','📚 Words'],['talk','🗣️ Speaking'],['grammar','📘 Grammar'],['practice','✍️ Practice'],u.numbers&&['numbers','🔢 Numbers'],['reading','📖 Reading'],u.sounds&&['sounds','🔤 Sounds'],u.idioms&&['idioms','💡 Idioms'],u.challenge&&['challenge','🎙️ Challenge'],['games','🎮 Games'],['test','📝 Unit Test']].filter(Boolean);
+  const NAV=[u.videos.length&&['videos','🎬 Videos'],['vocab','📚 Words'],['talk','🗣️ Speaking'],['grammar','📘 Grammar'],['practice','✍️ Practice'],u.numbers&&['numbers','🔢 Numbers'],['reading','📖 Reading'],u.sounds&&['sounds','🔤 Sounds'],u.idioms&&['idioms','💡 Idioms'],u.phrasal&&['phrasal','🔧 Phrasal Verbs'],u.slang&&['slang','😎 Slang'],u.story&&['story','📚 Story'],u.challenge&&['challenge','🎙️ Challenge'],['games','🎮 Games'],['test','📝 Unit Test']].filter(Boolean);
   let H=topBar(true)+`<main class="wrapc">
    <section class="uhero" style="background-image:linear-gradient(110deg,rgba(10,33,22,.92),rgba(12,97,21,.85) 45%,rgba(29,148,13,.55)),url(${u.cover})"><div class="tx"><span class="k">UNIT ${n} · ${LV(LVL).code}</span><h1>${u.title} ${u.icon}</h1>
     <div class="ar" style="margin-top:8px;font-weight:700;color:#e4f6d6">${u.intro}</div><div class="uprog"><div class="bar"><i data-prog="${n}"></i></div><b data-progt="${n}">0%</b></div></div>
@@ -528,6 +528,24 @@ function vUnit(n){
     H+=`<section class="sec" id="s-idioms">${secH('💡','Idiom Corner','تعبيرات إنجليزي زي ما أصحاب اللغة بيقولوها','iq')}
      <div class="idg">${I.items.map(x=>`<div class="idc"><div class="row" style="flex-wrap:nowrap"><button class="spk sm" data-say="${esc(x[0])}">🔊</button><b class="idn">${T(x[0])}</b></div><div class="idm">${T(x[1])}</div><div class="ar">${x[2]}</div><div class="ide"><button class="mini" data-say="${esc(x[3])}">🔊</button> ${T(x[3])}</div><div class="ar" style="font-size:13px">${x[4]||''}</div></div>`).join('')}</div>
      ${makeEx('iq','💡',{type:'mcq',title:'Use the idiom',ar:'اختار التعبير المناسب',items:I.quiz},'iq')}</section>`;}
+  /* phrasal verbs */
+  const card=x=>`<div class="idc"><div class="row" style="flex-wrap:nowrap"><button class="spk sm" data-say="${esc(x[0])}">🔊</button><b class="idn">${T(x[0])}</b></div><div class="idm">${T(x[1])}</div><div class="ar">${x[2]}</div><div class="ide"><button class="mini" data-say="${esc(x[3])}">🔊</button> ${T(x[3])}</div><div class="ar" style="font-size:13px">${x[4]||''}</div>${x[5]?`<div class="ar" style="font-size:13px;margin-top:6px;color:var(--g7)">💬 ${x[5]}</div>`:''}</div>`;
+  if(u.phrasal){const P=u.phrasal;
+    H+=`<section class="sec" id="s-phrasal">${secH('🔧','Phrasal Verbs','أفعال مركبة — فعل + حرف بيغيّر المعنى','pq')}
+     <div class="idg">${P.items.map(card).join('')}</div>
+     ${makeEx('pq','🔧',{type:'mcq',title:'Use the phrasal verb',ar:'اختار الـ phrasal verb المناسب',items:P.quiz},'pq')}</section>`;}
+  /* slang */
+  if(u.slang){const S=u.slang;
+    H+=`<section class="sec" id="s-slang">${secH('😎','Slang Corner','لغة الشارع — إزاي الشباب بيتكلموا فعلًا','sl')}
+     ${tip('Slang is for friends and social media — not for exams, emails or your boss!','السلانج للصحاب والسوشيال ميديا بس — مش للامتحانات ولا الإيميلات الرسمية ولا مديرك 😉')}
+     <div class="idg">${S.items.map(card).join('')}</div>
+     ${makeEx('sl','😎',{type:'mcq',title:'Speak like a local',ar:'اختار السلانج المناسب',items:S.quiz},'sl')}</section>`;}
+  /* story */
+  if(u.story){const ST=u.story;
+    H+=`<section class="sec" id="s-story">${secH('📚','Story: '+ST.title,ST.ar,'st')}
+     <div class="card pad"><div class="row" style="margin-bottom:8px"><button class="btn b-g" onclick="readStory(${n})">▶ Tell me the story</button><button class="btn b-soft" onclick="stopAll()">■</button><button class="btn b-soft" onclick="$('#sty').classList.toggle('tr')">ع Translation</button></div>
+     <div class="read" id="sty">${ST.lines.map((l,i)=>`<p id="sl-${i}"><button class="mini" data-say="${esc(l[0])}" data-g="${ST.g||'f'}">🔊</button><span class="tx">${T(l[0])}</span><span class="ar">${l[1]}</span></p>`).join('')}</div></div>
+     ${makeEx('st','📚',{type:'mcq',title:'Story questions',ar:'أسئلة على القصة',items:ST.quiz},'st')}</section>`;}
   /* speaking challenge */
   if(u.challenge){const C=u.challenge;
     H+=`<section class="sec" id="s-challenge">${secH('🎙️','Challenge: '+C.title,C.ar,'ch')}
@@ -572,6 +590,7 @@ function playLines(id){const u=UNITS[CUR],v=u.videos.find(x=>x.id===id);stopAll(
 function renderVocab(g){const u=UNITS[CUR];
   $('#vgrid').innerHTML=`<div class="vgrid">${u.vocab[g].items.map(([e,w,s])=>`<div class="vc" data-w="${esc(w)}" data-s="${esc(s)}"><div class="pic">${e}</div><div class="b"><b class="w" data-w="${esc(w)}">${w}</b><div class="ar">${lookup(w)||''}</div><div class="s">${T(s)}</div></div></div>`).join('')}</div>`;
   $$('#vgrid .vc').forEach(c=>c.onclick=e=>{if(e.target.closest('.w'))return;stopAll();const tok=playTok;say(c.dataset.w,{onend:()=>{if(tok===playTok)setTimeout(()=>say(c.dataset.s),250);}});vocabSeen(c.dataset.w);burstAt(c,'⭐');});}
+function readStory(n){const R=UNITS[n].story;stopAll();const tok=playTok;let i=0;const next=()=>{$$('.read p.now').forEach(p=>p.classList.remove('now'));if(tok!==playTok||i>=R.lines.length)return;const p=$('#sl-'+i);p.classList.add('now');say(R.lines[i][0],{g:R.g,onend:()=>{i++;setTimeout(next,300);}});};next();}
 function readAll(n){const R=UNITS[n].reading;stopAll();const tok=playTok;let i=0;const next=()=>{$$('.read p.now').forEach(p=>p.classList.remove('now'));if(tok!==playTok||i>=R.lines.length)return;const p=$('#rl-'+i);p.classList.add('now');say(R.lines[i][0],{g:R.g,onend:()=>{i++;setTimeout(next,300);}});};next();}
 
 /* ================= GAMES ================= */
@@ -676,6 +695,7 @@ function testSubmit(){
 const JOBS='student|teacher|doctor|engineer|nurse|farmer|chef|driver|pilot|worker|officer|police|lawyer|accountant|dentist|pharmacist|manager|housewife';
 const has=(re)=>t=>re.test(' '+t.toLowerCase()+' ');
 const CHECK={
+ len70:t=>(t.match(/[A-Za-z']+/g)||[]).length>=70,
  name:has(/my name is|my name's|\bi'?m [a-z]+|\bi am [a-z]+/), age:has(/years old|\b\d{1,2}\b/), from:has(/\bfrom\b/), live:has(/\blive[s]?\b/), job:has(new RegExp('\\b('+JOBS+')s?\\b')),
  family:has(/\b(father|mother|brother|sister|family|grandfather|grandmother|dad|mom|parents)\b/),
  getup:has(/get[s]? up|wake[s]? up/), breakfast:has(/breakfast/), go:has(/\bgo(es)? to\b/), after:has(/after school|after work|afternoon/), evening:has(/evening|night/), bed:has(/go(es)? to bed|sleep/),
@@ -793,6 +813,8 @@ function collectSpeech(){
     u.reading.lines.forEach(l=>{add(l[0],VOICE[u.reading.g]||'f');words(l[0]);});u.reading.keys.forEach(k=>add(k[1]));u.reading.quiz.forEach(q=>{both(q.q);q.o.forEach(words);});
     if(u.sounds){u.sounds.groups.forEach(g=>g.forEach&&g[4].forEach(x=>add(x[1])));u.sounds.quiz.items.forEach(i=>add(i[1]));words(u.sounds.tip[0]);}
     if(u.idioms){u.idioms.items.forEach(x=>{both(x[0]);both(x[1]);both(x[3]);});u.idioms.quiz.forEach(q=>{both(plain(q.q));q.o.forEach(words);});}
+    [u.phrasal,u.slang].forEach(P=>{if(P){P.items.forEach(x=>{both(x[0]);both(x[1]);both(x[3]);});P.quiz.forEach(q=>{both(plain(q.q));q.o.forEach(words);});}});
+    if(u.story){u.story.lines.forEach(l=>{add(l[0],VOICE[u.story.g]||'f');words(l[0]);});u.story.quiz.forEach(q=>{both(q.q);q.o.forEach(words);});}
     if(u.challenge)u.challenge.qs.forEach(both);
     (u.watch||[]).forEach(w=>{(w.words||[]).forEach(both);(w.lines||[]).forEach(l=>both(l[0]));(w.quiz||[]).forEach(q=>{both(plain(q.q));q.o.forEach(words);});});
     u.games.pairs.forEach(p=>add(p[1]));u.games.spell.forEach(p=>add(p[1]));u.games.speed.forEach(p=>words(p[0]));
