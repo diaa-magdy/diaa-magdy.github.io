@@ -150,10 +150,12 @@ const API={
     const p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
     try{await fauth.signInWithPopup(p);}catch(e){ if(/popup|operation-not-supported|web-storage/i.test(e.code||'')) await fauth.signInWithRedirect(p); else toast('⚠️ '+(e.message||e)); }
   },
-  async register(name,email){
-    if(ONLINE){const doc={name,email:USER.email,status:USER.email.toLowerCase()===ADMIN?'approved':'pending',created:Date.now(),prog:{},tests:{}};
+  async register(name,email,x){x=x||{};
+    if(ONLINE){
+      if(PROFILE){const up={name,wantLevel:x.wantLevel||'',gmail:x.gmail||USER.email};await fdb.collection('students').doc(USER.uid).set(up,{merge:true});Object.assign(PROFILE,up);return;}
+      const doc={name,email:USER.email,gmail:x.gmail||USER.email,wantLevel:x.wantLevel||'',status:USER.email.toLowerCase()===ADMIN?'approved':'pending',created:Date.now(),prog:{},tests:{}};
       await fdb.collection('students').doc(USER.uid).set(doc);PROFILE=Object.assign({uid:USER.uid},doc);}
-    else{L.students[email]=L.students[email]||{uid:email,name,email,status:email===ADMIN?'approved':'pending',created:Date.now(),prog:{},tests:{}};L.me=email;lsave();USER={uid:email,email};PROFILE=L.students[email];}
+    else{L.students[email]=L.students[email]||{uid:email,name,email,status:email===ADMIN?'approved':'pending',created:Date.now(),prog:{},tests:{}};Object.assign(L.students[email],{name,gmail:x.gmail||email,wantLevel:x.wantLevel||''});L.me=email;lsave();USER={uid:email,email};PROFILE=L.students[email];}
   },
   async logout(){ if(ONLINE) await fauth.signOut(); else {L.me=null;lsave();USER=null;PROFILE=null;} },
   async refresh(){ if(ONLINE&&USER){const d=await fdb.collection('students').doc(USER.uid).get();PROFILE=d.exists?Object.assign({uid:USER.uid},d.data()):null;} else if(USER){PROFILE=L.students[USER.uid]||null;} },
@@ -222,6 +224,9 @@ function render(){
   const v=(location.hash||'').slice(1);
   if(!USER) return vLogin();
   if(!PROFILE) return vProfileForm();
+  if(!isAdmin()&&PROFILE.status!=='rejected'){const anyOn=LEVELS.some(l=>lvState(PROFILE,l.id).on);
+    if(!PROFILE.wantLevel&&!anyOn) return vProfileForm();
+    if(!anyOn&&!sessionStorage.getItem('lp_regok')) return vRegDone();}
   if(v==='admin'&&isAdmin()) return vAdmin();
   if(PROFILE.status==='rejected'&&!isAdmin()) return vPending();
   const lm=v.match(/^level-(\w+)$/);
@@ -265,15 +270,36 @@ function vLogin(){
     if(name.length<2){$('#rerr').textContent='اكتب اسمك';return;} if(!/^[^\s@]+@gmail\.com$/.test(email)){$('#rerr').textContent='لازم إيميل Gmail صحيح';return;}
     await API.register(name,email);render();};
 }
+const lvOpts=sel=>`<option value="" disabled ${sel?'':'selected'}>— اختار مستواك · Choose your level —</option>`+LEVELS.map(l=>`<option value="${l.id}" ${sel===l.id?'selected':''}>${l.code} · ${l.en} · ${l.ar}</option>`).join('');
 function vProfileForm(){
+  const P=PROFILE||{};
   app.innerHTML=`<div class="auth"><div class="card box"><img class="chatty" src="img/chatty.png" alt="">
-   <h1>One more step! ✍️</h1><div class="ar" style="color:var(--mut);font-weight:700">اكتب اسمك بالإنجليزي زي ما هيتكتب في الشهادة.</div>
-   <form id="pf"><label class="fld"><span>Full name · الاسم بالكامل</span><input id="pn" required value="${esc(USER.displayName||'')}" placeholder="Ahmed Ali"></label>
-   <label class="fld"><span>Gmail</span><input value="${esc(USER.email||'')}" disabled></label><div class="err" id="perr"></div>
-   <button class="btn b-g" style="width:100%;font-size:17px">✅ Start · ابدأ</button></form>
+   <h1>One more step! ✍️</h1><div class="ar" style="color:var(--mut);font-weight:700">املا بياناتك عشان نفتحلك مستواك. اكتب اسمك بالإنجليزي زي ما هيتكتب في الشهادة.</div>
+   <form id="pf"><label class="fld"><span>Full name · الاسم بالكامل</span><input id="pn" required value="${esc(P.name||USER.displayName||'')}" placeholder="Ahmed Ali"></label>
+   <label class="fld"><span>Your level · مستواك <b style="color:#e53935">*</b></span><select id="pl" required class="inp" style="width:100%;padding:12px;border-radius:12px;font-size:15px">${lvOpts(P.wantLevel||'')}</select></label>
+   <label class="fld"><span>Gmail · الجيميل</span><input id="pg" type="email" dir="ltr" required value="${esc(P.gmail||USER.email||'')}" placeholder="name@gmail.com"></label><div class="err" id="perr"></div>
+   <button class="btn b-g" style="width:100%;font-size:17px">💾 Save · احفظ</button></form>
+   <div class="note ar" style="margin-top:10px">📸 بعد ما تحفظ، هتظهرلك صفحة فيها بياناتك — <b>خد لها سكرين شوت وابعتها للأدمن</b> عشان يفتحلك مستواك.</div>
    <button class="btn b-soft" style="width:100%;margin-top:10px" onclick="API.logout().then(render)">حساب تاني</button></div></div>`;
-  $('#pf').onsubmit=async e=>{e.preventDefault();const n=$('#pn').value.trim();if(n.length<3){$('#perr').textContent='اكتب اسمك كامل';return;}
-    try{await API.register(n,USER.email);render();}catch(err){$('#perr').textContent='حصلت مشكلة، جرّب تاني';console.warn(err);}};
+  $('#pf').onsubmit=async e=>{e.preventDefault();const n=$('#pn').value.trim(),lv=$('#pl').value,g=$('#pg').value.trim().toLowerCase();
+    if(n.length<3){$('#perr').textContent='اكتب اسمك كامل';return;}
+    if(!lv){$('#perr').textContent='لازم تختار مستواك عشان تكمل التسجيل';return;}
+    if(!/^[^\s@]+@gmail\.com$/.test(g)){$('#perr').textContent='اكتب جيميل صحيح (name@gmail.com)';return;}
+    try{await API.register(n,USER.email,{wantLevel:lv,gmail:g});sessionStorage.removeItem('lp_regok');render();}catch(err){$('#perr').textContent='حصلت مشكلة، جرّب تاني';console.warn(err);}};
+}
+function vRegDone(){
+  const L1=LV(PROFILE.wantLevel)||{code:'?',en:'',ar:''};
+  const msg=`السلام عليكم 👋\nسجّلت في Lingo Planet وعايز تفعيل مستوايا.\nالاسم: ${PROFILE.name}\nالمستوى: ${L1.code}\nالجيميل: ${PROFILE.gmail||PROFILE.email}`;
+  app.innerHTML=`<div class="auth"><div class="card box"><img class="chatty" src="img/chatty.png" alt="">
+   <h1>✅ تم التسجيل!</h1>
+   <div dir="rtl" style="background:#fff8e1;border:2px dashed #f9a825;border-radius:16px;padding:14px;margin:12px 0;font-weight:800;line-height:1.9">
+    <div>👤 <span dir="ltr">${esc(PROFILE.name)}</span></div>
+    <div>📚 المستوى: <span dir="ltr">${L1.code} · ${L1.en}</span></div>
+    <div>📧 <span dir="ltr">${esc(PROFILE.gmail||PROFILE.email)}</span></div></div>
+   <div class="paybox ar" style="font-size:16px"><b>📸 خد سكرين شوت للصفحة دي دلوقتي</b><br>وابعتها للأدمن على الواتساب، وبعدها هنفتحلك مستواك ✅</div>
+   ${contactBtns(msg)}
+   <div class="row" style="justify-content:center;margin-top:12px"><button class="btn b-g" onclick="API.refresh().then(render)">🔄 اتفعّل؟ اضغط هنا</button><button class="btn b-w" onclick="sessionStorage.setItem('lp_regok','1');render()">كمّل ←</button></div>
+   <button class="btn b-soft" style="width:100%;margin-top:10px" onclick="vProfileForm()">✏️ تعديل البيانات</button></div></div>`;
 }
 function waLink(phone,msg){return 'https://wa.me/'+String(phone).replace(/\D/g,'').replace(/^00/,'')+'?text='+encodeURIComponent(msg);}
 function contactBtns(msg){
@@ -333,7 +359,7 @@ async function vAdmin(){
     <div class="stats3"><div class="stat"><b>${cnt('pending')}</b><small>New</small></div><div class="stat"><b>${cnt('active')}</b><small>Subscribed</small></div><div class="stat"><b>${cnt('blocked')}</b><small>Blocked</small></div></div></div><img class="ch" src="img/chatty.png" alt="" style="width:150px"></div>
    <input class="inp" id="admq" placeholder="🔎 ابحث بالجيميل أو الاسم…" value="${esc(admQ)}" style="width:100%;margin:6px 0">
    ${q?'':`<div class="tabsx">${[['pending','🆕 جداد'],['active','✅ مشتركين'],['blocked','⛔ موقوفين']].map(t=>`<button class="${admTab===t[0]?'on':''}" onclick="admTab='${t[0]}';vAdmin()">${t[1]} (${cnt(t[0])})</button>`).join('')}</div>`}
-   <div class="card">${L2.length?L2.map(s=>{const me=(s.email||'').toLowerCase()===ADMIN;return `<div class="stu" style="flex-wrap:wrap"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:180px"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.created?' · '+fmtD(s.created):''}</small>
+   <div class="card">${L2.length?L2.map(s=>{const me=(s.email||'').toLowerCase()===ADMIN;return `<div class="stu" style="flex-wrap:wrap"><span class="avatar">${esc((s.name||'?').charAt(0).toUpperCase())}</span><div style="flex:1;min-width:180px"><b>${esc(s.name||'')}</b><small>${esc(s.email||'')}${s.gmail&&s.gmail!==s.email?' · 📧 '+esc(s.gmail):''}${s.created?' · '+fmtD(s.created):''}</small>${s.wantLevel?`<div style="font-weight:800;color:#e65100;font-size:13px">📚 طالب مستوى: ${(LV(s.wantLevel)||{}).code||esc(s.wantLevel)}</div>`:''}
       <div class="lchips">${LEVELS.map(l=>{const st=lvState(s,l.id);return `<button class="lchip ${st.on?'on':st.expired?'exp':''}" data-lv="${l.id}" data-uid="${esc(s.uid)}" data-name="${esc(s.name||'')}" title="${st.until?'لحد '+fmtD(st.until):''}">${st.on?'✅':st.expired?'⌛':'🔒'} ${l.code}${st.until?` <small>${fmtD(st.until)}</small>`:''}</button>`;}).join('')}</div>
       ${Object.keys(PACKS).filter(id=>lvState(s,id).on).map(id=>withLevel(id,()=>{const f=getFinal(s);return `<div class="mini-prog"><span style="background:var(--g7);color:#fff">${LV(id).code}</span>${UNIT_LIST.map(n=>{const p=pctOf(s,n),t=testBest(n,s);return `<span title="Unit ${n}">U${n} ${p}%${t!==null?' · 📝'+t+'%':''}</span>`;}).join('')}${f?`<span>🎓 ${f.best}%</span>`:''}</div>`;})).join('')}</div>
       ${me?'':(s.status==='rejected'?`<button class="btn b-g" style="padding:8px 14px" data-st="approved" data-uid="${esc(s.uid)}">↩ Unblock</button>`:`<button class="btn b-red" style="padding:8px 14px" data-st="rejected" data-uid="${esc(s.uid)}">⛔ Block</button>`)}
