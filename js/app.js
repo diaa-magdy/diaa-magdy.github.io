@@ -276,7 +276,7 @@ function vProfileForm(){
   app.innerHTML=`<div class="auth"><div class="card box"><img class="chatty" src="img/chatty.png" alt="">
    <h1>One more step! ✍️</h1><div class="ar" style="color:var(--mut);font-weight:700">املا بياناتك عشان نفتحلك مستواك. اكتب اسمك بالإنجليزي زي ما هيتكتب في الشهادة.</div>
    <form id="pf"><label class="fld"><span>Full name · الاسم بالكامل</span><input id="pn" required value="${esc(P.name||USER.displayName||'')}" placeholder="Ahmed Ali"></label>
-   <label class="fld"><span>Your level · مستواك <b style="color:#e53935">*</b></span><select id="pl" required class="inp" style="width:100%;padding:12px;border-radius:12px;font-size:15px">${lvOpts(P.wantLevel||'')}</select></label>
+   <label class="fld"><span>Your level · مستواك <b style="color:#e53935">*</b></span><select id="pl" class="inp" style="width:100%;padding:12px;border-radius:12px;font-size:15px">${lvOpts(P.wantLevel||'')}</select></label>
    <label class="fld"><span>Gmail · الجيميل</span><input id="pg" type="email" dir="ltr" required value="${esc(P.gmail||USER.email||'')}" placeholder="name@gmail.com"></label><div class="err" id="perr"></div>
    <button class="btn b-g" style="width:100%;font-size:17px">💾 Save · احفظ</button></form>
    <div class="note ar" style="margin-top:10px">📸 بعد ما تحفظ، هتظهرلك صفحة فيها بياناتك — <b>خد لها سكرين شوت وابعتها للأدمن</b> عشان يفتحلك مستواك.</div>
