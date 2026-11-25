@@ -133,7 +133,7 @@ let L={students:{},me:null,scores:{},cfg:{phones:[],admins:[]}};
 try{const s=JSON.parse(localStorage.getItem(LKEY)||'null');if(s)L=Object.assign(L,s);}catch(e){}
 function lsave(){try{localStorage.setItem(LKEY,JSON.stringify(L));}catch(e){}}
 const ONLINE=!!(CFG.firebase&&window.firebase);
-let fdb=null, fauth=null, USER=null, PROFILE=null, SET={phones:[],admins:[]}, STAFF=false;
+let fdb=null, fauth=null, USER=null, PROFILE=null, SET={phones:[],admins:[]}, STAFF=false, OWNERX=false, OWNERS=null;
 const API={
   async init(cb){
     if(ONLINE){
@@ -157,15 +157,26 @@ const API={
       await fdb.collection('students').doc(USER.uid).set(doc);PROFILE=Object.assign({uid:USER.uid},doc);}
     else{L.students[email]=L.students[email]||{uid:email,name,email,status:email===ADMIN?'approved':'pending',created:Date.now(),prog:{},tests:{}};Object.assign(L.students[email],{name,gmail:x.gmail||email,wantLevel:x.wantLevel||''});L.me=email;lsave();USER={uid:email,email};PROFILE=L.students[email];}
   },
+  async ownersSave(){await fdb.collection('config').doc('owners').set({uids:OWNERS.uids,meta:OWNERS.meta});},
+  async linkOwner(kind,email,pass){ /* uses a side app so the current owner session stays signed in */
+    const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(CFG.firebase,'sec');const sa=sec.auth();let cred;
+    try{ if(kind==='google'){const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});cred=await sa.signInWithPopup(p);}
+      else{try{cred=await sa.createUserWithEmailAndPassword(email,pass);}catch(e){if(e.code==='auth/email-already-in-use')cred=await sa.signInWithEmailAndPassword(email,pass);else throw e;}}
+      const u=cred.user;OWNERS=OWNERS||{uids:[],meta:{}};OWNERS.uids=OWNERS.uids||[];OWNERS.meta=OWNERS.meta||{};
+      if(u.uid===USER.uid) throw new Error('ده نفس الحساب اللي انت داخل بيه دلوقتي');
+      if(!OWNERS.uids.includes(u.uid))OWNERS.uids.push(u.uid);OWNERS.meta[u.uid]={kind,label:u.email||'',at:Date.now()};await API.ownersSave();
+    } finally{try{await sa.signOut();}catch(e){}}
+  },
   async logout(){ if(ONLINE) await fauth.signOut(); else {L.me=null;lsave();USER=null;PROFILE=null;} },
   async refresh(){ if(ONLINE&&USER){const d=await fdb.collection('students').doc(USER.uid).get();PROFILE=d.exists?Object.assign({uid:USER.uid},d.data()):null;} else if(USER){PROFILE=L.students[USER.uid]||null;} },
   saveProg(){ if(!PROFILE)return; if(ONLINE){fdb.collection('students').doc(USER.uid).set({prog:PROFILE.prog,tests:PROFILE.tests,final:PROFILE.final||null,finals:PROFILE.finals||{}},{merge:true}).catch(e=>console.warn(e));} else {L.students[USER.uid]=PROFILE;lsave();} },
   async students(){ if(ONLINE){const q=await fdb.collection('students').get();return q.docs.map(d=>Object.assign({uid:d.id},d.data()));} return Object.values(L.students); },
   async setStatus(uid,st){ if(ONLINE) await fdb.collection('students').doc(uid).set({status:st},{merge:true}); else {L.students[uid].status=st;lsave();} },
   async loadSettings(){
-    SET={phones:[],admins:[]};STAFF=false;
+    SET={phones:[],admins:[]};STAFF=false;OWNERX=false;OWNERS=null;
     if(!ONLINE){SET={phones:(L.cfg.phones||[]).slice(),admins:(L.cfg.admins||[]).slice()};STAFF=!!USER&&SET.admins.includes((USER.email||'').toLowerCase());return;}
     if(!USER)return;
+    try{const d=await fdb.collection('config').doc('owners').get();OWNERS=d.exists?d.data():{uids:[],meta:{}};OWNERX=(OWNERS.uids||[]).includes(USER.uid);}catch(e){/* not owner */}
     try{const d=await fdb.collection('config').doc('public').get();if(d.exists)SET.phones=d.data().phones||[];}catch(e){console.warn(e);}
     try{const d=await fdb.collection('config').doc('staff').get();if(d.exists){SET.admins=d.data().admins||[];STAFF=SET.admins.includes((USER.email||'').toLowerCase());}}catch(e){/* not staff */}
   },
@@ -188,7 +199,7 @@ const API={
     return Object.values(L.scores).filter(x=>!key||x.key===key);
   }
 };
-const isOwner=()=>!!(USER&&ADMIN&&(USER.email||'').toLowerCase()===ADMIN);
+const isOwner=()=>!!(USER&&((ADMIN&&(USER.email||'').toLowerCase()===ADMIN)||OWNERX));
 const isAdmin=()=>isOwner()||STAFF;
 function lvState(prof,id){ /* returns {on, until, legacy} */
   const e=((prof||{}).levels||{})[id];
@@ -223,6 +234,7 @@ function render(){
   stopAll();hidePop();closeModal();CUR=0;
   const v=(location.hash||'').slice(1);
   if(!USER) return vLogin();
+  if(!PROFILE&&isAdmin()) PROFILE={uid:USER.uid,name:'Admin',email:USER.email||'',status:'approved',created:Date.now(),prog:{},tests:{}};
   if(!PROFILE) return vProfileForm();
   if(!isAdmin()&&PROFILE.status!=='rejected'){const anyOn=LEVELS.some(l=>lvState(PROFILE,l.id).on);
     if(!PROFILE.wantLevel&&!anyOn) return vProfileForm();
@@ -266,11 +278,48 @@ function vLogin(){
    :`<form id="rf"><label class="fld"><span>Your name · اسمك</span><input id="rn" required placeholder="Ahmed Ali"></label><label class="fld"><span>Gmail</span><input id="re" required type="email" placeholder="name@gmail.com"></label><div class="err" id="rerr"></div><button class="btn b-g" style="width:100%;font-size:17px">🚀 Join · سجّل</button></form>`}
    <div class="note ar">🔒 سجّل بالجيميل، وبعدها اختار الليفل اللي اشتركت فيه — بيتفتحلك بعد تفعيل الأدمن.</div>
   </div></div>`;
+  if(ONLINE){let n=0;const ch=$('.auth .chatty');ch.onclick=()=>{if(++n>=5)ownerLogin();};}
   const f=$('#rf'); if(f) f.onsubmit=async e=>{e.preventDefault();const name=$('#rn').value.trim(),email=$('#re').value.trim().toLowerCase();
     if(name.length<2){$('#rerr').textContent='اكتب اسمك';return;} if(!/^[^\s@]+@gmail\.com$/.test(email)){$('#rerr').textContent='لازم إيميل Gmail صحيح';return;}
     await API.register(name,email);render();};
 }
 const lvOpts=sel=>`<option value="" disabled ${sel?'':'selected'}>— اختار مستواك · Choose your level —</option>`+LEVELS.map(l=>`<option value="${l.id}" ${sel===l.id?'selected':''}>${l.code} · ${l.en} · ${l.ar}</option>`).join('');
+function ownerLogin(){
+  openModal(`<h2 class="fred" style="color:var(--g7);margin:0 0 6px">🔑 Admin login</h2>
+   <form id="olf"><label class="fld"><span>Email</span><input id="ole" type="email" dir="ltr" autocomplete="username" required></label>
+   <label class="fld"><span>Password</span><input id="olp" type="password" dir="ltr" autocomplete="current-password" required></label><div class="err" id="olerr"></div>
+   <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="button" class="btn b-w" onclick="closeModal()">إلغاء</button><button class="btn b-g">دخول</button></div></form>
+   <button class="btn b-soft" style="width:100%;margin-top:8px;font-size:13px" id="olfg">نسيت الباسورد؟</button>`);
+  $('#olf').onsubmit=async e=>{e.preventDefault();$('#olerr').textContent='';
+    try{await fauth.signInWithEmailAndPassword($('#ole').value.trim(),$('#olp').value);closeModal();}catch(err){$('#olerr').textContent='البيانات مش صحيحة';console.warn(err.code);}};
+  $('#olfg').onclick=async()=>{const em=$('#ole').value.trim();if(!em){$('#olerr').textContent='اكتب الإيميل الأول';return;}
+    try{await fauth.sendPasswordResetEmail(em);}catch(e){}$('#olerr').textContent='لو الإيميل مربوط، هيوصلك لينك لتغيير الباسورد.';};
+}
+function ownersCard(){
+  const M=(OWNERS&&OWNERS.meta)||{},U=(OWNERS&&OWNERS.uids)||[];
+  return `<div class="card pad" style="margin-top:16px"><div class="sub">🛡️ طرق دخول احتياطية للمالك <small>لو حصلت مشكلة في الجيميل الأساسي تقدر تدخل بيها بكل صلاحياتك</small></div>
+   <div>${U.map(u=>{const m=M[u]||{};return `<div class="setrow"><b>${m.kind==='google'?'🔵 Google':'🔑 Email'}</b><span dir="ltr" style="flex:1">${esc(m.label||u)}</span><button class="mini" data-delow="${esc(u)}">✖</button></div>`;}).join('')||'<div class="ar" style="color:var(--mut)">مفيش طرق احتياطية لسه.</div>'}</div>
+   <div class="row" style="margin-top:10px"><button class="btn b-g" id="owg">➕ ربط حساب جوجل تاني</button><button class="btn b-g" id="owe">➕ ربط إيميل وباسورد</button></div>
+   <div class="ar" style="color:var(--mut);font-size:13px;margin-top:6px">دخول الإيميل والباسورد مخفي: في صفحة الدخول اضغط على صورة الببغاء 5 مرات ورا بعض.</div></div>`;
+}
+function ownersBind(){
+  const B=$('#owg');if(!B)return;
+  B.onclick=async()=>{try{await API.linkOwner('google');toast('✅ اتربط حساب جوجل الاحتياطي');}catch(e){toast('⚠️ '+(e.message||e));}vAdmin();};
+  $('#owe').onclick=()=>{openModal(`<h2 class="fred" style="color:var(--g7);margin:0 0 6px">🔑 ربط إيميل وباسورد</h2>
+    <div class="ar" style="color:var(--mut);font-size:13px">استخدم إيميل تاني غير الجيميل الأساسي (Outlook مثلًا) وباسورد قوي محدش يعرفه.</div>
+    <form id="owf"><label class="fld"><span>Email</span><input id="owem" type="email" dir="ltr" autocomplete="off" required></label>
+    <label class="fld"><span>Password (12 حرف على الأقل)</span><input id="owp1" type="password" dir="ltr" autocomplete="new-password" required></label>
+    <label class="fld"><span>اكتب الباسورد تاني</span><input id="owp2" type="password" dir="ltr" autocomplete="new-password" required></label><div class="err" id="owerr"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="button" class="btn b-w" onclick="closeModal()">إلغاء</button><button class="btn b-g">✅ اربط</button></div></form>`);
+    $('#owf').onsubmit=async e=>{e.preventDefault();const em=$('#owem').value.trim().toLowerCase(),p1=$('#owp1').value,p2=$('#owp2').value;
+      if(em===ADMIN){$('#owerr').textContent='استخدم إيميل غير الجيميل الأساسي';return;}
+      if(p1.length<12){$('#owerr').textContent='الباسورد لازم 12 حرف على الأقل';return;}
+      if(p1!==p2){$('#owerr').textContent='الباسوردين مش زي بعض';return;}
+      try{await API.linkOwner('email',em,p1);closeModal();toast('✅ اتربط الإيميل الاحتياطي');vAdmin();}
+      catch(err){$('#owerr').textContent=err.code==='auth/operation-not-allowed'?'لازم تفعّل Email/Password من Firebase الأول':err.code==='auth/wrong-password'||err.code==='auth/invalid-credential'?'الإيميل ده متسجل بباسورد تاني':'حصلت مشكلة: '+(err.code||err.message);}};};
+  $$('[data-delow]').forEach(b=>b.onclick=async()=>{if(b.dataset.delow===USER.uid){toast('مينفعش تشيل الحساب اللي انت داخل بيه');return;}if(!confirm('شيل طريقة الدخول دي؟'))return;
+    OWNERS.uids=OWNERS.uids.filter(u=>u!==b.dataset.delow);delete OWNERS.meta[b.dataset.delow];try{await API.ownersSave();toast('اتشالت');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
+}
 function vProfileForm(){
   const P=PROFILE||{};
   app.innerHTML=`<div class="auth"><div class="card box"><img class="chatty" src="img/chatty.png" alt="">
@@ -371,7 +420,7 @@ async function vAdmin(){
      <div class="ar" style="color:var(--mut);font-size:13px;margin-top:4px">اكتب الرقم بكود الدولة من غير + (مصر: 20… · السعودية: 966…)</div>
      <div class="sub" style="margin-top:22px">👥 الأدمنز المساعدين <small>يقدروا يفتحوا الليفلات ويوقفوا الطلاب — مش بيقدروا يحذفوا أو يغيروا الإعدادات</small></div>
      <div>${SET.admins.map((e,i)=>`<div class="setrow"><b dir="ltr">${esc(e)}</b><button class="mini" data-delad="${i}">✖</button></div>`).join('')||'<div class="ar" style="color:var(--mut)">مفيش أدمنز مساعدين لسه.</div>'}</div>
-     <div class="row" style="margin-top:8px"><input class="inp" id="ade" dir="ltr" type="email" placeholder="assistant@gmail.com" style="flex:1;min-width:200px"><button class="btn b-g" id="adadd">➕ إضافة أدمن</button></div></div>`:''}
+     <div class="row" style="margin-top:8px"><input class="inp" id="ade" dir="ltr" type="email" placeholder="assistant@gmail.com" style="flex:1;min-width:200px"><button class="btn b-g" id="adadd">➕ إضافة أدمن</button></div></div>${ONLINE?ownersCard():''}`:''}
    <div class="row" style="justify-content:center;margin:16px 0"><a class="btn b-soft" href="#champions">🏆 لوحة الأبطال</a><a class="btn b-soft" href="#home">📚 الليفلات</a></div>`;
   const qi=$('#admq');qi.oninput=()=>{admQ=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{const pos=qi.selectionStart;vAdmin().then(()=>{const n=$('#admq');n.focus();n.setSelectionRange(pos,pos);});},350);};
   $$('[data-lv]').forEach(b=>b.onclick=()=>{const id=b.dataset.lv,uid=b.dataset.uid,L1=LV(id),s=S.find(x=>x.uid===uid),st=lvState(s,id);
@@ -383,7 +432,7 @@ async function vAdmin(){
       try{await API.setLevel(uid,id,{on:true,until,by:USER.email,at:Date.now()});closeModal();toast('✅ اتفتح ليفل '+L1.code);}catch(e){toast('⚠️ '+e.message);}vAdmin();};});
   $$('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('حذف الطالب "'+b.dataset.name+'" نهائيًا؟ لو حاول يدخل تاني هيرجع كطالب جديد.'))return;b.disabled=true;try{await API.remove(b.dataset.del);toast('🗑 تم حذف الطالب');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
   $$('[data-st]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API.setStatus(b.dataset.uid,b.dataset.st);toast(b.dataset.st==='approved'?'↩ اترجع':'⛔ اتوقف');}catch(e){toast('⚠️ '+e.message);}vAdmin();});
-  if(owner){
+  if(owner){ownersBind();
     const save=async m=>{try{await API.saveSettings();toast(m);}catch(e){toast('⚠️ '+e.message);}vAdmin();};
     $('#phadd').onclick=()=>{const n=$('#phn').value.trim(),ph=$('#php').value.replace(/\D/g,'').replace(/^00/,'');if(!n||ph.length<9){toast('اكتب الاسم والرقم بكود الدولة');return;}SET.phones.push({name:n,phone:ph});save('✅ اتضاف الرقم');};
     $$('[data-delph]').forEach(b=>b.onclick=()=>{SET.phones.splice(+b.dataset.delph,1);save('اتشال الرقم');});

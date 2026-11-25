@@ -1,10 +1,13 @@
 rules_version = '2'; service cloud.firestore { match /databases/{database}/documents {
  function signedIn() { return request.auth != null; }
  function myEmail() { return request.auth.token.email.lower(); }
- function isOwner() { return signedIn() && myEmail() == 'diaamagdy4112000@gmail.com' && request.auth.token.email_verified == true; }
+ function isMainOwner() { return signedIn() && myEmail() == 'diaamagdy4112000@gmail.com' && request.auth.token.email_verified == true; }
+ function isBackupOwner() { return signedIn() && exists(/databases/$(database)/documents/config/owners) && request.auth.uid in get(/databases/$(database)/documents/config/owners).data.uids; }
+ function isOwner() { return isMainOwner() || isBackupOwner(); }
  function isStaff() { return isOwner() || (signedIn() && request.auth.token.email_verified == true && exists(/databases/$(database)/documents/config/staff) && myEmail() in get(/databases/$(database)/documents/config/staff).data.admins); }
  function approved() { return signedIn() && exists(/databases/$(database)/documents/students/$(request.auth.uid)) && get(/databases/$(database)/documents/students/$(request.auth.uid)).data.status == 'approved'; }
  match /config/public { allow read: if signedIn(); allow write: if isOwner(); }
+ match /config/owners { allow read, write: if isOwner(); }
  match /config/staff { allow read: if isStaff(); allow write: if isOwner(); }
  match /students/{uid} {
   allow read: if isStaff() || (signedIn() && request.auth.uid == uid);
